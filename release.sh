@@ -2,10 +2,10 @@
 
 versions=( "$@" )
 
-sortedVersions=( "$(
+sortedVersions=$(
 	for version in "${versions[@]}"; do
 		echo "$version"
-	done | sort --reverse) )"
+	done | sort --reverse)
 
 
 for i in "${!sortedVersions[@]}"; do

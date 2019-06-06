@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+# This file exists solely to get `cimg-shared` to pass shellcheck.
+# It's not actually used for real image builds.
+
+repository=nothing
+parent=nothing
+variants=(nothing)
