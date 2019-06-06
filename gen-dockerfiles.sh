@@ -6,8 +6,8 @@
 # Import repo-specific image information
 source ./manifest
 
-version=( "$1" )  # SemVer version number passed in via command-line
-sha=( "$2" )  # SHA hash for the main binary of the image, passed in via command-line
+version="$1"  # SemVer version number passed in via command-line
+sha="$2"  # SHA hash for the main binary of the image, passed in via command-line
 tagless_image=cimg/${repository}
 
 # prepare file
@@ -30,9 +30,6 @@ sed -i 's/%%GO_VERSION%%/'"${version}"'/g' "./${versionShort}/Dockerfile"
 sed -i 's!%%GO_SHA%%!'"$sha"'!g' "./$versionShort/Dockerfile"
 
 string="$string --file $versionShort/Dockerfile"
-if [[ $i == 0 ]]; then
-	string="${string} -t ${tagless_image}:latest"
-fi
 
 string="${string} -t ${tagless_image}:${version}"
 
