@@ -11,7 +11,7 @@ RESULTS_FILENAME="$5" # name of file (must end in .xml) in which to store JUnit 
 RESULTS_DIR_PATH="$6" # path at which to create directory for test results, e.g., `node`
 
 # create directory for Goss Dockerfile and build context
-mkdir $GOSS_DOCKERFILE_DIR_PATH
+mkdir "$GOSS_DOCKERFILE_DIR_PATH"
 
 echo "----------------------------------------------------------------------------------------------------"
 echo "copying Dockerfile to $GOSS_DOCKERFILE_DIR_PATH for Goss modifications..."
@@ -50,7 +50,7 @@ dgoss run "$ORIGINAL_IMAGE_NAME/$ORIGINAL_IMAGE_TAG-goss"
 
 # save JUnit output to variable so we can control what we store
 export GOSS_OPTS="--format junit"
-results=$(dgoss run "$ORIGINAL_IMAGE_NAME"/"$ORIGINAL_IMAGE_TAG-goss")
+results=$(dgoss run "$ORIGINAL_IMAGE_NAME/$ORIGINAL_IMAGE_TAG-goss")
 
 # create properly formatted JUnit XML file
 echo '<?xml version="1.0" encoding="UTF-8"?>' > \
