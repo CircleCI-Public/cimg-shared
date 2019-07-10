@@ -1,9 +1,10 @@
 version: 2.1
 
 orbs:
-  shell: circleci/shellcheck@1.3.10
+  shell: circleci/shellcheck@1.3.12
 
 workflows:
   lint-scripts:
     jobs:
-      - shell/check
+      - shell/check:
+          ignore: SC2001
