@@ -50,7 +50,7 @@ dgoss run "$ORIGINAL_IMAGE_NAME/$ORIGINAL_IMAGE_TAG-goss"
 
 # save JUnit output to variable so we can control what we store
 export GOSS_OPTS="--format junit"
-results="$(dgoss run $ORIGINAL_IMAGE_NAME/$ORIGINAL_IMAGE_TAG-goss)"
+results=$(dgoss run "$ORIGINAL_IMAGE_NAME"/"$ORIGINAL_IMAGE_TAG-goss")
 
 # create properly formatted JUnit XML file
 echo '<?xml version="1.0" encoding="UTF-8"?>' > \
