@@ -93,7 +93,7 @@ arrDOCKERFILES=($(echo "${DOCKERFILES//,/ }"))
 let END=${#arrDOCKERFILES[@]}
 
 for ((i=0;i<END;i++)); do
-  DOCKERFILE="{arrDOCKERFILES[i]}
+  DOCKERFILE="{arrDOCKERFILES[i]}"
 
   hadolint "$IGNORE_RULES" "$TRUSTED_REGISTRIES" $DOCKERFILE
 
