@@ -94,15 +94,7 @@ arrDOCKERFILES=($(echo "${DOCKERFILES//,/ }"))
 for (( i=0; i<="${#arrDOCKERFILES[@]} -1"; i++ )); do
   DOCKERFILE=${arrDOCKERFILES[i]}
 
-  # echo "$DOCKERFILE"
-  # pwd
+  hadolint "$IGNORE_RULES" "$TRUSTED_REGISTRIES" "$(pwd)/$DOCKERFILE"
 
-  # hadolint "$IGNORE_RULES" "$TRUSTED_REGISTRIES" "$DOCKERFILE"
-  # hadolint "$DOCKERFILE"
-  hadolint "$(pwd)/$DOCKERFILE"
-
-  # fullpath="$(pwd)/$DOCKERFILE"
-  # hadolint $fullpath
-
-  # echo "Success! $DOCKERFILE linted; no issues found"
+  echo "Success! $DOCKERFILE linted; no issues found"
 done
