@@ -17,6 +17,9 @@
 #
 # example command usage:
 #
+# bash shared/lint.sh -i DL3000,SC1010 -- app/test.Dockerfile,app/deploy.Dockerfile
+# bash shared/lint.sh --ignore-rules SC1010 -t docker.io -- "$(find */Dockerfile | tr '\n' ',')"
+# bash shared/lint.sh --trusted-registries my.registry:5000 -- Dockerfile
 # bash shared/lint.sh -- "$(find */*/Dockerfile | tr '\n' ',')"
 
 
