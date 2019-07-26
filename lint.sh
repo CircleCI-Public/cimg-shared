@@ -94,7 +94,10 @@ arrDOCKERFILES=($(echo "${DOCKERFILES//,/ }"))
 for (( i=0; i<="${#arrDOCKERFILES[@]} -1"; i++ )); do
   DOCKERFILE=${arrDOCKERFILES[i]}
 
+  echo "$Dockerfile"
+  pwd
+
   hadolint "$IGNORE_RULES" "$TRUSTED_REGISTRIES" "$DOCKERFILE"
 
-  echo "Success! $DOCKERFILE linted; no issues found"
+  # echo "Success! $DOCKERFILE linted; no issues found"
 done
