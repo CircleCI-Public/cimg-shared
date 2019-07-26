@@ -41,7 +41,7 @@ while :; do
 				if [[ $(echo "$2" | grep DL) || $(echo "$2" | grep SC) ]]; then
 					IGNORE_STRING="$2"
 					IGNORE_RULES=$(echo "--ignore ${IGNORE_STRING//,/ --ignore }")
-					printf "Ignore rules: $IGNORE_RULES\n\n"
+					printf "Ignore rules: %s\n\n" "$IGNORE_RULES"
 					shift
 				else
 					die "ERROR: unknown option for \`--ignore-rules\`: \`$2\`"
@@ -54,7 +54,7 @@ while :; do
 			if [ "$2" ]; then
 				REGISTRIES_STRING="$2"
 				TRUSTED_REGISTRIES=$(echo "--trusted-registry ${REGISTRIES_STRING//,/ --trusted-registry }")
-				printf "Trusted registries: $TRUSTED_REGISTRIES\n\n"
+				printf "Trusted registries: %s\n\n" "$TRUSTED_REGISTRIES"
 				shift
 			else
 				die 'ERROR: `--trusted-registries` requires a non-empty option argument'
@@ -86,13 +86,13 @@ fi
 DOCKERFILES="$1"
 
 # use comma delimiters to create array
-arrDOCKERFILES=(${DOCKERFILES//,/ })
+arrDOCKERFILES=("${DOCKERFILES//,/ }")
 let END=${#arrDOCKERFILES[@]}
 
 for ((i=0;i<END;i++)); do
   DOCKERFILE="${arrDOCKERFILES[i]}"
 
-  hadolint $IGNORE_RULES $TRUSTED_REGISTRIES $DOCKERFILE
+  hadolint "$IGNORE_RULES" "$TRUSTED_REGISTRIES" "$DOCKERFILE"
 
   echo "Success! $DOCKERFILE linted; no issues found"
 done
