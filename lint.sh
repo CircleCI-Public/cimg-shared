@@ -89,11 +89,11 @@ fi
 DOCKERFILES="$1"
 
 # use comma delimiters to create array
-arrDOCKERFILES=("${DOCKERFILES//,/ }")
+arrDOCKERFILES=($(echo "${DOCKERFILES//,/ }"))
 let END=${#arrDOCKERFILES[@]}
 
 for ((i=0;i<END;i++)); do
-  DOCKERFILE="${arrDOCKERFILES[i]}"
+  DOCKERFILE="{arrDOCKERFILES[i]}
 
   hadolint "$IGNORE_RULES" "$TRUSTED_REGISTRIES" $DOCKERFILE
 
