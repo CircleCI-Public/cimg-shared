@@ -94,7 +94,7 @@ arrDOCKERFILES=($(echo "${DOCKERFILES//,/ }"))
 for (( i=0; i<="${#arrDOCKERFILES[@]} -1"; i++ )); do
   DOCKERFILE=${arrDOCKERFILES[i]}
 
-  echo "$Dockerfile"
+  echo "$DOCKERFILE"
   pwd
 
   hadolint "$IGNORE_RULES" "$TRUSTED_REGISTRIES" "$DOCKERFILE"
