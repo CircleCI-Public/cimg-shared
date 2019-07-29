@@ -7,4 +7,4 @@ workflows:
   lint-scripts:
     jobs:
       - shell/check:
-          ignore: SC2001,SC2016,SC2086,SC2116,SC2143,SC2207,SC2219
+          ignore: SC2001,SC2016,SC2086,SC2116,SC2143,SC2164,SC2207,SC2115,SC2219

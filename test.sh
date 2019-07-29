@@ -4,6 +4,8 @@ error() {
   echo "ERRROR: missing argument for $1, expected in position $2"
 }
 
+
+
 # variables
 DOCKERFILE_NAME="${1:-Dockerfile}"
 DOCKERFILE_PATH="${2:?$(error DOCKERFILE_PATH \`\$2\`)}"
