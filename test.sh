@@ -29,7 +29,7 @@ echo "COPY goss-entrypoint.sh /"
 echo "RUN sudo chmod +x /goss-entrypoint.sh || chmod +x /goss-entrypoint.sh"
 echo 'ENTRYPOINT ["/goss-entrypoint.sh"]'
 
-cat >> "$DOCKERFILE_PATH/$GOSS_DOCKERFILE_NAME" \<< EOM
+cat >> "$DOCKERFILE_PATH/$GOSS_DOCKERFILE_NAME" << EOM
 # first, cat goss-entrypoint.sh into whatever directory within which we are building a particular image
 COPY goss-entrypoint.sh /
 
@@ -45,7 +45,7 @@ echo "#!/usr/bin/env bash"
 echo "# extend this if tests need more time"
 echo "sleep 600"
 
-cat > "$DOCKERFILE_PATH/goss-entrypoint.sh" \<< EOM
+cat > "$DOCKERFILE_PATH/goss-entrypoint.sh" << EOM
 #!/usr/bin/env bash
 
 # extend this if tests need more time
