@@ -23,9 +23,9 @@ cp "$DOCKERFILE_PATH/$DOCKERFILE_NAME" "$DOCKERFILE_PATH/$GOSS_DOCKERFILE_NAME"
 echo "----------------------------------------------------------------------------------------------------"
 echo "adding the following modifications to $GOSS_DOCKERFILE_NAME..."
 echo "----------------------------------------------------------------------------------------------------"
-echo "COPY goss-entrypoint.sh /""
+echo "COPY goss-entrypoint.sh /"
 echo "RUN sudo chmod +x /goss-entrypoint.sh || chmod +x /goss-entrypoint.sh"
-echo "ENTRYPOINT ["/goss-entrypoint.sh"]""
+echo 'ENTRYPOINT ["/goss-entrypoint.sh"]'
 
 cat >> "$DOCKERFILE_PATH/$GOSS_DOCKERFILE_NAME" \<< EOM
 # first, cat goss-entrypoint.sh into whatever directory within which we are building a particular image
