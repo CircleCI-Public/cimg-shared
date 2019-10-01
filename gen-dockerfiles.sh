@@ -25,10 +25,10 @@ fi
 
 [[ -d "$versionShort" ]] || mkdir "$versionShort"
 
-sed -r -e 's!%%PARENT%%!'"$parent"'!g' "./Dockerfile.template" > "./$versionShort/Dockerfile"
-sed -i 's/%%MAIN_VERSION%%/'"${version}"'/g' "./${versionShort}/Dockerfile"
-sed -i 's/%%VERSION_MINOR%%/'"${versionShort}"'/g' "./${versionShort}/Dockerfile"
-sed -i 's!%%MAIN_SHA%%!'"$sha"'!g' "./$versionShort/Dockerfile"
+sed -E -e 's!%%PARENT%%!'"$parent"'!g' "./Dockerfile.template" > "./$versionShort/Dockerfile"
+sed -i -E 's/%%MAIN_VERSION%%/'"${version}"'/g' "./${versionShort}/Dockerfile"
+sed -i -E 's/%%VERSION_MINOR%%/'"${versionShort}"'/g' "./${versionShort}/Dockerfile"
+sed -i -E 's!%%MAIN_SHA%%!'"$sha"'!g' "./$versionShort/Dockerfile"
 
 string="$string --file $versionShort/Dockerfile"
 
