@@ -15,6 +15,6 @@ for i in "${!sortedVersions[@]}"; do
 	git checkout -b "release-v${version}"
 	shared/gen-dockerfiles.sh "${version}" fake-sha
 	git add .
-	git commit -m "Add v${version}."
+	git commit -m "Add v${version}. [release]"
 	git push -u origin "release-v${version}"
 done
