@@ -25,10 +25,13 @@ fi
 
 [[ -d "$versionShort" ]] || mkdir "$versionShort"
 
-sed -r -e 's!%%PARENT%%!'"$parent"'!g' "./Dockerfile.template" > "./$versionShort/Dockerfile"
-sed -i 's/%%MAIN_VERSION%%/'"${version}"'/g' "./${versionShort}/Dockerfile"
-sed -i 's/%%VERSION_MINOR%%/'"${versionShort}"'/g' "./${versionShort}/Dockerfile"
-sed -i 's!%%MAIN_SHA%%!'"$sha"'!g' "./$versionShort/Dockerfile"
+sed -e 's!%%PARENT%%!'"$parent"'!g' "./Dockerfile.template" > "./$versionShort/Dockerfile"
+sed -i.bak 's/%%MAIN_VERSION%%/'"${version}"'/g' "./${versionShort}/Dockerfile"
+sed -i.bak 's/%%VERSION_MINOR%%/'"${versionShort}"'/g' "./${versionShort}/Dockerfile"
+sed -i.bak 's!%%MAIN_SHA%%!'"$sha"'!g' "./$versionShort/Dockerfile"
+
+# This .bak thing above and below is a Linux/macOS compatibility fix
+rm "./${versionShort}/Dockerfile.bak"
 
 string="$string --file $versionShort/Dockerfile"
 
