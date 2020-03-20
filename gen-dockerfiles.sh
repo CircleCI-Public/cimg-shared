@@ -44,3 +44,32 @@ fi
 string="$string ."
 
 echo "$string" >> ./build-images.sh
+
+
+# Build a Dockerfile for each variant
+# Currently this only supports shared variants, not local variants
+
+for variant in "${variants[@]}"
+do
+	# If version/variant directory doesn't exist, create it
+	[[ -d "${versionShort}/${variant}" ]] || mkdir "${versionShort}/${variant}"
+
+	sed -e 's!%%PARENT%%!'"$repository"'!g' "./shared/variants/${variant}.Dockerfile.template" > "./${versionShort}/${variant}/Dockerfile"
+	sed -i.bak 's/%%PARENT_TAG%%/'"${version}"'/g' "./${versionShort}/${variant}/Dockerfile"
+done
+
+# This .bak thing above and below is a Linux/macOS compatibility fix
+rm "./${versionShort}/${variant}/Dockerfile.bak"
+
+string="docker build"
+string="$string --file ${versionShort}/${variant}/Dockerfile"
+
+string="${string} -t ${tagless_image}:${version}-${variant}"
+
+if [[ $versionShort != "$version" ]]; then
+	string="${string}  -t ${tagless_image}:${versionShort}-${variant}"
+fi
+
+string="$string ."
+
+echo "$string" >> ./build-images.sh
