@@ -5,71 +5,102 @@
 
 # Import repo-specific image information
 source ./manifest
-
-version="$1"  # SemVer version number passed in via command-line
-sha="$2"  # SHA hash for the main binary of the image, passed in via command-line
 tagless_image=cimg/${repository}
 
 # prepare file
 echo "#!/usr/bin/env bash" > ./build-images.sh
 echo "" >> ./build-images.sh
 
-string="docker build"
+# A version can be a major.minor or major.minor.patch version string.
+# An alias can be passed right after the version with an equal sign (=).
+# An additional parameter can be passed with a hash (#) sign.
+# Additionally versions/version groups are separated by spaces.
+#
+# Examples:
+#
+# 1.13.1 v1.14.2
+# v1.13.1#sha256abcfabdbc674bcg
+# v13.0.1=lts
+# v20.04
+# v8.0.252=lts=https://example.com/download/item.tar-gz
 
-if [[ $version =~ ^[0-9]+\.[0-9]+ ]]; then
-	versionShort=${BASH_REMATCH[0]}
-else
-	echo "Version matching failed." >&2
-	# continue
-fi
+#####
+# Starting version loop.
+#####
+for versionGroup in "$@"; do
 
-[[ -d "$versionShort" ]] || mkdir "$versionShort"
+	# Process the version group(s) that were passed to this script.
+	if [[ "$versionGroup" == *"#"* ]]; then
+		vgParam1=$(cut -d "#" -f2- <<< "$versionGroup")
+		versionGroup="${versionGroup//$vgParam1}"
+		versionGroup="${versionGroup//\#}"
+	fi
 
-sed -e 's!%%PARENT%%!'"$parent"'!g' "./Dockerfile.template" > "./$versionShort/Dockerfile"
-sed -i.bak 's/%%MAIN_VERSION%%/'"${version}"'/g' "./${versionShort}/Dockerfile"
-sed -i.bak 's/%%VERSION_MINOR%%/'"${versionShort}"'/g' "./${versionShort}/Dockerfile"
-sed -i.bak 's!%%MAIN_SHA%%!'"$sha"'!g' "./$versionShort/Dockerfile"
+	if [[ "$versionGroup" == *"="* ]]; then
+		vgAlias1=$(cut -d "=" -f2- <<< "$versionGroup")
+		versionGroup="${versionGroup//$vgAlias1}"
+		versionGroup="${versionGroup//=}"
+	fi
 
-# This .bak thing above and below is a Linux/macOS compatibility fix
-rm "./${versionShort}/Dockerfile.bak"
+	vgVersion=$(cut -d "v" -f2- <<< "$versionGroup")
 
-string="$string --file $versionShort/Dockerfile"
+	string="docker build"
 
-string="${string} -t ${tagless_image}:${version}"
+	if [[ $vgVersion =~ ^[0-9]+\.[0-9]+ ]]; then
+		versionShort=${BASH_REMATCH[0]}
+	else
+		echo "Version matching failed." >&2
+		# continue
+	fi
 
-if [[ $versionShort != "$version" ]]; then
-	string="${string}  -t ${tagless_image}:${versionShort}"
-fi
+	[[ -d "$versionShort" ]] || mkdir "$versionShort"
 
-string="$string ."
+	sed -e 's!%%PARENT%%!'"$parent"'!g' "./Dockerfile.template" > "./$versionShort/Dockerfile"
+	sed -i.bak 's/%%MAIN_VERSION%%/'"${vgVersion}"'/g' "./${versionShort}/Dockerfile"  # will be deprecated in the future
+	sed -i.bak 's/%%VERSION_FULL%%/'"${vgVersion}"'/g' "./${versionShort}/Dockerfile"
+	sed -i.bak 's/%%VERSION_MINOR%%/'"${versionShort}"'/g' "./${versionShort}/Dockerfile"
+	sed -i.bak 's!%%MAIN_SHA%%!'"$vgParam1"'!g' "./$versionShort/Dockerfile"  # will be deprecated in the future
+	sed -i.bak 's!%%PARAM1%%!'"$vgParam1"'!g' "./$versionShort/Dockerfile"
 
-echo "$string" >> ./build-images.sh
+	# This .bak thing above and below is a Linux/macOS compatibility fix
+	rm "./${versionShort}/Dockerfile.bak"
 
+	string="$string --file $versionShort/Dockerfile"
 
-# Build a Dockerfile for each variant
-# Currently this only supports shared variants, not local variants
+	string="${string} -t ${tagless_image}:${vgVersion}"
 
-for variant in "${variants[@]}"
-do
-	# If version/variant directory doesn't exist, create it
-	[[ -d "${versionShort}/${variant}" ]] || mkdir "${versionShort}/${variant}"
+	if [[ $versionShort != "$vgVersion" ]]; then
+		string="${string}  -t ${tagless_image}:${versionShort}"
+	fi
 
-	sed -e 's!%%PARENT%%!'"$repository"'!g' "./shared/variants/${variant}.Dockerfile.template" > "./${versionShort}/${variant}/Dockerfile"
-	sed -i.bak 's/%%PARENT_TAG%%/'"${version}"'/g' "./${versionShort}/${variant}/Dockerfile"
+	string="$string ."
+
+	echo "$string" >> ./build-images.sh
+
+	# Build a Dockerfile for each variant
+	# Currently this only supports shared variants, not local variants
+	for variant in "${variants[@]}"; do
+
+		# If version/variant directory doesn't exist, create it
+		[[ -d "${versionShort}/${variant}" ]] || mkdir "${versionShort}/${variant}"
+
+		sed -e 's!%%PARENT%%!'"$repository"'!g' "./shared/variants/${variant}.Dockerfile.template" > "./${versionShort}/${variant}/Dockerfile"
+		sed -i.bak 's/%%PARENT_TAG%%/'"${vgVersion}"'/g' "./${versionShort}/${variant}/Dockerfile"
+
+		# This .bak thing above and below is a Linux/macOS compatibility fix
+		rm "./${versionShort}/${variant}/Dockerfile.bak"
+
+		string="docker build"
+		string="$string --file ${versionShort}/${variant}/Dockerfile"
+
+		string="${string} -t ${tagless_image}:${vgVersion}-${variant}"
+
+		if [[ $versionShort != "$vgVersion" ]]; then
+			string="${string}  -t ${tagless_image}:${versionShort}-${variant}"
+		fi
+
+		string="$string ."
+
+		echo "$string" >> ./build-images.sh
+	done
 done
-
-# This .bak thing above and below is a Linux/macOS compatibility fix
-rm "./${versionShort}/${variant}/Dockerfile.bak"
-
-string="docker build"
-string="$string --file ${versionShort}/${variant}/Dockerfile"
-
-string="${string} -t ${tagless_image}:${version}-${variant}"
-
-if [[ $versionShort != "$version" ]]; then
-	string="${string}  -t ${tagless_image}:${versionShort}-${variant}"
-fi
-
-string="$string ."
-
-echo "$string" >> ./build-images.sh
