@@ -61,6 +61,7 @@ for versionGroup in "$@"; do
 	sed -i.bak 's/%%VERSION_MINOR%%/'"${versionShort}"'/g' "./${versionShort}/Dockerfile"
 	sed -i.bak 's!%%MAIN_SHA%%!'"$vgParam1"'!g' "./$versionShort/Dockerfile"  # will be deprecated in the future
 	sed -i.bak 's!%%PARAM1%%!'"$vgParam1"'!g' "./$versionShort/Dockerfile"
+	sed -i.bak 's!%%ALIAS1%%!'"$vgAlias1"'!g' "./$versionShort/Dockerfile"
 
 	# This .bak thing above and below is a Linux/macOS compatibility fix
 	rm "./${versionShort}/Dockerfile.bak"
@@ -71,6 +72,10 @@ for versionGroup in "$@"; do
 
 	if [[ $versionShort != "$vgVersion" ]]; then
 		string="${string}  -t ${tagless_image}:${versionShort}"
+	fi
+
+	if [[ -n $vgAlias1 ]]; then
+		string="${string}  -t ${tagless_image}:${vgAlias1}"
 	fi
 
 	string="$string ."
@@ -97,6 +102,10 @@ for versionGroup in "$@"; do
 
 		if [[ $versionShort != "$vgVersion" ]]; then
 			string="${string}  -t ${tagless_image}:${versionShort}-${variant}"
+		fi
+
+		if [[ -n $vgAlias1 ]]; then
+			string="${string}  -t ${tagless_image}:${vgAlias1}-${variant}"
 		fi
 
 		string="$string ."
