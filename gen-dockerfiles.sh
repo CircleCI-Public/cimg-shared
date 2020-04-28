@@ -112,4 +112,15 @@ for versionGroup in "$@"; do
 
 		echo "$string" >> ./build-images.sh
 	done
+
+	# Build out the ALIASES file. Keeps track of aliases that have been set
+	# without losing old versions.
+	if [[ -n $vgAlias1 ]]; then
+		if [[ -f ALIASES ]]; then
+			# Make sure the current alias isn't in the file.
+			grep -v "${vgAlias1}" ./ALIASES > ./TEMP && mv ./TEMP ./ALIASES
+		fi
+
+		echo "${vgAlias1}=${vgVersion}" >> ALIASES
+	fi
 done
