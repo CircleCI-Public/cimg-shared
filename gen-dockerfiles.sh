@@ -86,10 +86,20 @@ for versionGroup in "$@"; do
 	# Currently this only supports shared variants, not local variants
 	for variant in "${variants[@]}"; do
 
+		# Check if variant is local, shared, or doesn't exists
+		if [[ -f "./variants/${variant}.Dockerfile.template" ]]; then
+			variantTemplateFile="./variants/${variant}.Dockerfile.template"
+		elif [[ -f "./shared/variants/${variant}.Dockerfile.template" ]]; then
+			variantTemplateFile="./shared/variants/${variant}.Dockerfile.template"
+		else
+			echo "Error: Variant ${variant} doesn't exists. Exiting."
+			exit 2
+		fi
+
 		# If version/variant directory doesn't exist, create it
 		[[ -d "${versionShort}/${variant}" ]] || mkdir "${versionShort}/${variant}"
 
-		sed -e 's!%%PARENT%%!'"$repository"'!g' "./shared/variants/${variant}.Dockerfile.template" > "./${versionShort}/${variant}/Dockerfile"
+		sed -e 's!%%PARENT%%!'"$repository"'!g' "${variantTemplateFile}" > "./${versionShort}/${variant}/Dockerfile"
 		sed -i.bak 's/%%PARENT_TAG%%/'"${vgVersion}"'/g' "./${versionShort}/${variant}/Dockerfile"
 
 		# This .bak thing above and below is a Linux/macOS compatibility fix
