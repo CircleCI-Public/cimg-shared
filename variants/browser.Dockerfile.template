@@ -1,33 +1,18 @@
-# The Node.js variant of the base image.
-FROM cimg/python:3.6.10
+# vim:set ft=dockerfile:
+
+FROM cimg/%%PARENT%%:%%PARENT_TAG%%
 
 LABEL maintainer="CircleCI Community & Partner Engineering Team <community-partner@circleci.com>"
 
-ENV JAVA_VERSION 11.0.8
-ENV URL https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.8%2B10/OpenJDK11U-jdk_x64_linux_hotspot_11.0.8_10.tar.gz
-ENV JAVA_HOME /usr/local/jdk-${JAVA_VERSION}
+# install java for selenium
+RUN sudo apt update && \
+    sudo apt-get install -y --no-install-recommends --no-upgrade openjdk-11-jre
 
-# Install Java
-RUN curl -sSL -o java.tar.gz "${URL}" && \
-	sudo mkdir /usr/local/jdk-${JAVA_VERSION} && \
-	sudo tar -xzf java.tar.gz --strip-components=1 -C /usr/local/jdk-${JAVA_VERSION} && \
-	rm java.tar.gz && \
-	sudo ln -s /usr/local/jdk-${JAVA_VERSION}/bin/java /usr/bin/java && \
-	sudo ln -s /usr/local/jdk-${JAVA_VERSION}/bin/javac /usr/bin/javac && \
-	sudo ln -s /usr/local/jdk-${JAVA_VERSION}/bin/javaws /usr/bin/javaws && \
-	# The dual version command is to support OpenJDK 8
-	java --version || java -version && \
-	javac --version || javac -version
-
+RUN sudo apt clean && sudo rm -rf /var/lib/apt/lists/*
 # Install selenium
 RUN curl -sSL -o selenium-server-standalone-3.141.59.jar "https://selenium-release.storage.googleapis.com/3.141/selenium-server-standalone-3.141.59.jar" && \
-    # TODO where should I put the jar?
     sudo cp selenium-server-standalone-3.141.59.jar /usr/local/bin/selenium.jar && \
     rm selenium-server-standalone-3.141.59.jar
-    # TODO: where do we start selenium? the orb?
-    # java -jar /usr/local/bin/selenium.jar
-
-RUN sudo apt update
 
 RUN FIREFOX_URL="https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64&lang=en-US" \
   && ACTUAL_URL=$(curl -Ls -o /dev/null -w %{url_effective} $FIREFOX_URL) \
@@ -68,5 +53,6 @@ RUN CHROME_VERSION="$(google-chrome --version)" \
     && sudo mv chromedriver /usr/local/bin/chromedriver \
     && sudo chmod +x /usr/local/bin/chromedriver \
     && chromedriver --version
+
 
 RUN sudo apt clean && sudo rm -rf /var/lib/apt/lists/*
