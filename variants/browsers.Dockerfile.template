@@ -42,6 +42,7 @@ RUN sudo apt-get update && \
         libpango-1.0-0 \
         libpangocairo-1.0-0 \
         libxcursor1 \
+		libxss1 \
         xdg-utils \
 		xvfb \
 	&& \
