@@ -23,6 +23,18 @@ echo "" >> ./build-images.sh
 # v13.0.1=lts
 # v20.04
 # v8.0.252=lts=https://example.com/download/item.tar-gz
+#
+# Template variables exists in the `Dockerfile.template` files. The start and
+# end with two percent symbles `%%`. During Dockerfile generation, they get
+# replaced with actual valuables. Here's what's available to use:
+#
+# %%VERSION_FULL%% - the complete version passed to the script such as `1.2.3`
+# %%MAIN_VERSION%% - deprecated, please use %%VERSION_FULL%%
+# %%VERSION_MAJOR%% - just the major integer of the version such as `1`
+# %%VERSION_MINOR%% - the major and minor integers of the version with a decimal in the middle such as `1.2`
+# %%ALIAS1%% - what's passed as the alias when passing version strings to the build script (see above)
+# %%PARAM1%% - what's passed as the paramater when passing version strings to the build script (see above)
+# %%MAIN_SHA%% - deprecated, please use %%PARAM1%%
 
 #####
 # Starting version loop.
@@ -42,16 +54,25 @@ for versionGroup in "$@"; do
 		versionGroup="${versionGroup//=}"
 	fi
 
-	vgVersion=$(cut -d "v" -f2- <<< "$versionGroup")
+	vgVersionFull=$(cut -d "v" -f2- <<< "$versionGroup")
+	vgVersion=$vgVersionFull  # will be deprecated in the future
+
+	if [[ $vgVersionFull =~ ^[0-9]+\.[0-9]+ ]]; then
+		vgVersionMinor=${BASH_REMATCH[0]}
+		versionShort=$vgVersionMinor  # will be deprecated in the future
+	else
+		echo "Version matching (minor) failed." >&2
+		exit 1
+	fi
+
+	if [[ $vgVersionFull =~ ^[0-9]+ ]]; then
+		vgVersionMajor=${BASH_REMATCH[0]}
+	else
+		echo "Version matching (major) failed." >&2
+		exit 1
+	fi
 
 	string="docker build"
-
-	if [[ $vgVersion =~ ^[0-9]+\.[0-9]+ ]]; then
-		versionShort=${BASH_REMATCH[0]}
-	else
-		echo "Version matching failed." >&2
-		# continue
-	fi
 
 	[[ -d "$versionShort" ]] || mkdir "$versionShort"
 
@@ -59,6 +80,7 @@ for versionGroup in "$@"; do
 	sed -i.bak 's/%%MAIN_VERSION%%/'"${vgVersion}"'/g' "./${versionShort}/Dockerfile"  # will be deprecated in the future
 	sed -i.bak 's/%%VERSION_FULL%%/'"${vgVersion}"'/g' "./${versionShort}/Dockerfile"
 	sed -i.bak 's/%%VERSION_MINOR%%/'"${versionShort}"'/g' "./${versionShort}/Dockerfile"
+	sed -i.bak 's/%%VERSION_MAJOR%%/'"${vgVersionMajor}"'/g' "./${vgVersionMinor}/Dockerfile"
 	sed -i.bak 's!%%MAIN_SHA%%!'"$vgParam1"'!g' "./$versionShort/Dockerfile"  # will be deprecated in the future
 	sed -i.bak 's!%%PARAM1%%!'"$vgParam1"'!g' "./$versionShort/Dockerfile"
 	sed -i.bak 's!%%ALIAS1%%!'"$vgAlias1"'!g' "./$versionShort/Dockerfile"
