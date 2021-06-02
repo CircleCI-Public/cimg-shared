@@ -46,7 +46,9 @@ elif [[ ${#versions[@]} -gt 4 ]]; then
 	commitMSG="Pub: ${versions[0]},${versions[1]},${versions[2]},${versions[3]}, and more. [release]"
 fi
 
-git checkout -b "${branchName}" master
+defaultBranch=$(git remote show origin | grep 'HEAD branch' | cut -d' ' -f5)
+
+git checkout -b "${branchName}" "${defaultBranch}"
 shared/gen-dockerfiles.sh "$@"
 git add .
 git commit -m "${commitMSG}"
