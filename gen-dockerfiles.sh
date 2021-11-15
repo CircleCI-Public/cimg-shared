@@ -7,9 +7,14 @@
 source ./manifest
 tagless_image=cimg/${repository}
 
-# prepare file
+# Prepare the build and push files. Originally we only needed a build file but
+# with modern versions of Docker, a push file became neccesary as well.
 echo "#!/usr/bin/env bash" > ./build-images.sh
+chmod +x ./build-images.sh
 echo "" >> ./build-images.sh
+
+echo "#!/usr/bin/env bash" > ./push-images.sh
+chmod +x ./push-images.sh
 
 # A version can be a major.minor or major.minor.patch version string.
 # An alias can be passed right after the version with an equal sign (=).
@@ -104,6 +109,21 @@ for versionGroup in "$@"; do
 
 	echo "$string" >> ./build-images.sh
 
+	echo "" >> ./push-images.sh
+
+	# push main tag
+	echo "docker push ${tagless_image}:${vgVersion}" >> ./push-images.sh
+
+	# potentially push semver alias tag
+	if [[ $versionShort != "$vgVersion" ]]; then
+		echo "docker push ${tagless_image}:${versionShort}" >> ./push-images.sh
+	fi
+
+	# potentially push alias tag
+	if [[ -n $vgAlias1 ]]; then
+		echo "docker push ${tagless_image}:${vgAlias1}" >> ./push-images.sh
+	fi
+
 	# Build a Dockerfile for each variant
 	# Currently this only supports shared variants, not local variants
 	for variant in "${variants[@]}"; do
@@ -143,6 +163,19 @@ for versionGroup in "$@"; do
 		string="$string ."
 
 		echo "$string" >> ./build-images.sh
+
+		# push the variant tag
+		echo "docker push ${tagless_image}:${vgVersion}-${variant}" >> ./push-images.sh
+
+		# potentially push the semver alias alias tag
+		if [[ $versionShort != "$vgVersion" ]]; then
+			echo "docker push ${tagless_image}:${versionShort}-${variant}" >> ./push-images.sh
+		fi
+
+		# potentially push the semver alias alias tag
+		if [[ -n $vgAlias1 ]]; then
+			echo "docker push ${tagless_image}:${vgAlias1}-${variant}" >> ./push-images.sh
+		fi
 	done
 
 	# Build out the ALIASES file. Keeps track of aliases that have been set
