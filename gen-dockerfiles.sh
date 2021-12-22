@@ -25,10 +25,10 @@ echo "" >> ./build-images.sh
 # v8.0.252=lts=https://example.com/download/item.tar-gz
 
 #####
-# Starting version loop.
+# Starting version loop. 
 #####
-for versionGroup in "$@"; do
 
+for versionGroup in "$@"; do
 	# Process the version group(s) that were passed to this script.
 	if [[ "$versionGroup" == *"#"* ]]; then
 		vgParam1=$(cut -d "#" -f2- <<< "$versionGroup")
@@ -40,6 +40,15 @@ for versionGroup in "$@"; do
 		vgAlias1=$(cut -d "=" -f2- <<< "$versionGroup")
 		versionGroup="${versionGroup//$vgAlias1}"
 		versionGroup="${versionGroup//=}"
+	fi
+	# Checks for the current LTS version and compares to passed in version to prevent backtracking
+	# Not sure if this should be going into gen or release - this technically makes it more general
+	if [[ $vgAlias1 ]]; then
+		currentLTS="$(grep 'lts' ALIASES | cut -d "=" -f2)"
+		if [ "$(printf '%s\n' "$versionGroup" "$currentLTS" | sort -V | head -n1)" = "$versionGroup" ]; then
+			echo "Please use an updated LTS version" 
+			exit 1
+		fi
 	fi
 
 	vgVersion=$(cut -d "v" -f2- <<< "$versionGroup")
@@ -65,10 +74,11 @@ for versionGroup in "$@"; do
 
 	# This .bak thing above and below is a Linux/macOS compatibility fix
 	rm "./${versionShort}/Dockerfile.bak"
-
+ 
 	string="$string --file $versionShort/Dockerfile"
 
 	string="${string} -t ${tagless_image}:${vgVersion}"
+	echo $string "string"
 
 	if [[ $versionShort != "$vgVersion" ]]; then
 		string="${string}  -t ${tagless_image}:${versionShort}"
@@ -134,3 +144,4 @@ for versionGroup in "$@"; do
 		echo "${vgAlias1}=${vgVersion}" >> ALIASES
 	fi
 done
+
