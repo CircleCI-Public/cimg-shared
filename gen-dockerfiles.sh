@@ -27,7 +27,6 @@ echo "" >> ./build-images.sh
 #####
 # Starting version loop. 
 #####
-
 for versionGroup in "$@"; do
 	# Process the version group(s) that were passed to this script.
 	if [[ "$versionGroup" == *"#"* ]]; then
@@ -144,4 +143,3 @@ for versionGroup in "$@"; do
 		echo "${vgAlias1}=${vgVersion}" >> ALIASES
 	fi
 done
-
