@@ -5,7 +5,7 @@
 
 # Import repo-specific image information
 source ./manifest
-tagless_image=cimg/${repository}
+tagless_image=${namespace}/${repository}
 
 # Prepare the build and push files. Originally we only needed a build file but
 # with modern versions of Docker, a push file became neccesary as well.
