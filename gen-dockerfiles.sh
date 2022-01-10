@@ -5,15 +5,15 @@
 
 # Import repo-specific image information
 source ./manifest
-tagless_image=cimg/${repository}
+tagless_image=${cimg}/${repository}
 
 # Prepare the build and push files. Originally we only needed a build file but
 # with modern versions of Docker, a push file became neccesary as well.
-echo "#!/usr/bin/env bash" > ./build-images.sh
+echo -e "#!/usr/bin/env bash\r\n# Do not edit by hand; please use build scripts/templates to make changes"> ./build-images.sh
 chmod +x ./build-images.sh
 echo "" >> ./build-images.sh
 
-echo "#!/usr/bin/env bash" > ./push-images.sh
+echo -e "#!/usr/bin/env bash\r\n# Do not edit by hand; please use build scripts/templates to make changes " > ./push-images.sh
 chmod +x ./push-images.sh
 
 # A version can be a major.minor or major.minor.patch version string.
