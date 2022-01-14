@@ -82,6 +82,7 @@ for versionGroup in "$@"; do
 	[[ -d "$versionShort" ]] || mkdir "$versionShort"
 
 	sed -e 's!%%PARENT%%!'"$parent"'!g' "./Dockerfile.template" > "./$versionShort/Dockerfile"
+	sed -i.bak 's/%%NAMESPACE%%/'"${namespace}"'/g' "./${versionShort}/Dockerfile"
 	sed -i.bak 's/%%MAIN_VERSION%%/'"${vgVersion}"'/g' "./${versionShort}/Dockerfile"  # will be deprecated in the future
 	sed -i.bak 's/%%VERSION_FULL%%/'"${vgVersion}"'/g' "./${versionShort}/Dockerfile"
 	sed -i.bak 's/%%VERSION_MINOR%%/'"${versionShort}"'/g' "./${versionShort}/Dockerfile"
