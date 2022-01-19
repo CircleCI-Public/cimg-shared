@@ -5,7 +5,7 @@
 
 # Import repo-specific image information
 source ./manifest
-tagless_image=cimg/${repository}
+tagless_image=${namespace}/${repository}
 
 # Prepare the build and push files. Originally we only needed a build file but
 # with modern versions of Docker, a push file became neccesary as well.
@@ -84,6 +84,7 @@ for versionGroup in "$@"; do
 	[[ -d "$versionShort" ]] || mkdir "$versionShort"
 
 	sed -e 's!%%PARENT%%!'"$parent"'!g' "./Dockerfile.template" > "./$versionShort/Dockerfile"
+	sed -i.bak 's/%%NAMESPACE%%/'"${namespace}"'/g' "./${versionShort}/Dockerfile"
 	sed -i.bak 's/%%MAIN_VERSION%%/'"${vgVersion}"'/g' "./${versionShort}/Dockerfile"  # will be deprecated in the future
 	sed -i.bak 's/%%VERSION_FULL%%/'"${vgVersion}"'/g' "./${versionShort}/Dockerfile"
 	sed -i.bak 's/%%VERSION_MINOR%%/'"${versionShort}"'/g' "./${versionShort}/Dockerfile"
