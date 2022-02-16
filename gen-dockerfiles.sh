@@ -87,7 +87,7 @@ for versionGroup in "$@"; do
 	[[ -d "$versionShort" ]] || mkdir "$versionShort"
 
 	# Parses through template variables and replaces matching strings
-	templateParser $parent $namespace $vgVersion $versionShort $vgVersionMajor $vgParam1 $vgAlias1
+	templateParser "$parent" "$namespace" "$vgVersion" "$versionShort" "$vgVersionMajor" "$vgParam1" "$vgAlias1"
 
 	# Removes files associated with Linux/MacOS compatability fix for sed
 	if [[ -e "./$versionShort/Dockerfile.bak" ]]; then
@@ -154,20 +154,20 @@ for versionGroup in "$@"; do
 		# Accounts for different variants and parses multiple template variables in order to generate Dockerfile
 		# Hardcoded variables are default values
 		if [[ $variant == "browsers" ]]; then
-			variantParser $parent $namespace $vgVersion $versionShort $vgVersionMajor openjdk-11 $vgAlias1
+			variantParser "$parent" "$namespace" "$vgVersion" "$versionShort" "$vgVersionMajor" "openjdk-11" "$vgAlias1"
 		fi
 		if [[ $variant == "node" ]]; then
-			variantParser $parent $namespace $vgVersion $versionShort $vgVersionMajor lts $vgAlias1
+			variantParser "$parent" "$namespace" "$vgVersion" "$versionShort" "$vgVersionMajor" "lts" "$vgAlias1"
 		fi
 	
 		if [[ $vgParam1 =~ v[0-9][0-9] ]] && [[ $variant = "node" ]]; then
 			[[ -d "${versionShort}/node-${vgParam1}" ]] || mkdir "${versionShort}/node-${vgParam1}"
-			nodeParser $repository $namespace $vgVersion $versionShort $vgVersionMajor $vgParam1 $vgAlias1
+			nodeParser "$repository" "$namespace" "$vgVersion" "$versionShort" "$vgVersionMajor" "$vgParam1" "$vgAlias1"
 			echo "docker push ${tagless_image}:${vgAlias1}-node-${vgParam1}" >> ./push-images.sh
 		fi
 		if [[ $vgParam1 =~ open ]] && [[ $variant = "browsers" ]]; then
 			[[ -d "${versionShort}/browsers-${vgParam1}" ]] || mkdir "${versionShort}/browsers-${vgParam1}"
-			browserParser $repository $namespace $vgVersion $versionShort $vgVersionMajor $vgParam1 $vgAlias1
+			browserParser "$repository" "$namespace" "$vgVersion" "$versionShort" "$vgVersionMajor" "$vgParam1" "$vgAlias1"
 			echo "docker push ${tagless_image}:${vgAlias1}-browsers-${vgParam1}" >> ./push-images.sh
 		fi
 
