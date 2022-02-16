@@ -40,7 +40,6 @@ chmod +x ./push-images.sh
 # replaced with actual valuables. Here's what's available to use:
 #
 # %%VERSION_FULL%% - the complete version passed to the script such as `1.2.3`
-# %%VERSION_MAJOR%% - just the major integer of the version such as `1`
 # %%VERSION_MINOR%% - the major and minor integers of the version with a decimal in the middle such as `1.2`
 # %%ALIAS1%% - what's passed as the alias when passing version strings to the build script (see above)
 # %%PARAM1%% - what's passed as the paramater when passing version strings to the build script (see above)
