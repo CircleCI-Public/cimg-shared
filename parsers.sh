@@ -23,6 +23,7 @@ variantParser() {
 	local versionShort=$4
 	local vgParam1=$5
 	local vgAlias1=$6
+	local variantTemplateFile=$7
 
 	sed -e 's!%%PARENT%%!'"$repository"'!g' "${variantTemplateFile}" > "./$versionShort/${variant}/Dockerfile"
 	sed -i.bak 's!%%PARENT_TAG%%!'"${vgVersion}"'!g' "./${versionShort}/${variant}/Dockerfile"
@@ -41,6 +42,7 @@ nodeParser() {
 	local versionShort=$4
 	local vgParam1=$5
 	local vgAlias1=$6
+	local variantTemplateFile=$7
 	variant=node
 
 	[[ -d "${versionShort}/${variant}-${vgParam1}" ]] || mkdir "${versionShort}/${variant}-${vgParam1}"
@@ -61,6 +63,7 @@ browserParser() {
 	local versionShort=$4
 	local vgParam1=$5
 	local vgAlias1=$6
+	local variantTemplateFile=$7
 	variant=browsers
 
 	[[ -d "${versionShort}/${variant}-${vgParam1}" ]] || mkdir "${versionShort}/${variant}-${vgParam1}"

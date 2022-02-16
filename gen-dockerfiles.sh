@@ -153,20 +153,20 @@ for versionGroup in "$@"; do
 		# Accounts for different variants and parses multiple template variables in order to generate Dockerfile
 		# Hardcoded variables are default values
 		if [[ $variant == "browsers" ]]; then
-			variantParser "$parent" "$namespace" "$vgVersion" "$versionShort" "$vgVersionMajor" "openjdk-11" "$vgAlias1"
+			variantParser "$parent" "$namespace" "$vgVersion" "$versionShort" "$vgVersionMajor" "openjdk-11" "$vgAlias1" "$variantTemplateFile"
 		fi
 		if [[ $variant == "node" ]]; then
-			variantParser "$parent" "$namespace" "$vgVersion" "$versionShort" "$vgVersionMajor" "lts" "$vgAlias1"
+			variantParser "$parent" "$namespace" "$vgVersion" "$versionShort" "$vgVersionMajor" "lts" "$vgAlias1" "${variantTemplateFile}"
 		fi
 	
 		if [[ $vgParam1 =~ v[0-9][0-9] ]] && [[ $variant = "node" ]]; then
 			[[ -d "${versionShort}/node-${vgParam1}" ]] || mkdir "${versionShort}/node-${vgParam1}"
-			nodeParser "$repository" "$namespace" "$vgVersion" "$versionShort" "$vgVersionMajor" "$vgParam1" "$vgAlias1"
+			nodeParser "$repository" "$namespace" "$vgVersion" "$versionShort" "$vgVersionMajor" "$vgParam1" "$vgAlias1" "$variantTemplateFile"
 			echo "docker push ${tagless_image}:${vgAlias1}-node-${vgParam1}" >> ./push-images.sh
 		fi
 		if [[ $vgParam1 =~ open ]] && [[ $variant = "browsers" ]]; then
 			[[ -d "${versionShort}/browsers-${vgParam1}" ]] || mkdir "${versionShort}/browsers-${vgParam1}"
-			browserParser "$repository" "$namespace" "$vgVersion" "$versionShort" "$vgVersionMajor" "$vgParam1" "$vgAlias1"
+			browserParser "$repository" "$namespace" "$vgVersion" "$versionShort" "$vgVersionMajor" "$vgParam1" "$vgAlias1" "$variantTemplateFile"
 			echo "docker push ${tagless_image}:${vgAlias1}-browsers-${vgParam1}" >> ./push-images.sh
 		fi
 
