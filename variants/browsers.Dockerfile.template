@@ -16,7 +16,7 @@ RUN sudo apt-get update && \
     # Java is installed for Selenium
     if ! command -v java > /dev/null; then \
         echo "Java not found in parent image, installing..." && \
-        sudo apt-get install -y --no-install-recommends --no-upgrade openjdk-11-jre; \
+        sudo apt-get install -y --no-install-recommends --no-upgrade %%PARAM1%%-jre; \
     fi && \
 
     # Firefox deps

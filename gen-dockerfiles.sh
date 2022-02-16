@@ -7,6 +7,10 @@
 source ./manifest
 tagless_image=${namespace}/${repository}
 
+# Import parsing functions
+source ./parsers.sh
+chmod +x ./parsers.sh
+
 # Prepare the build and push files. Originally we only needed a build file but
 # with modern versions of Docker, a push file became neccesary as well.
 echo "#!/usr/bin/env bash" > ./build-images.sh
@@ -36,12 +40,10 @@ chmod +x ./push-images.sh
 # replaced with actual valuables. Here's what's available to use:
 #
 # %%VERSION_FULL%% - the complete version passed to the script such as `1.2.3`
-# %%MAIN_VERSION%% - deprecated, please use %%VERSION_FULL%%
 # %%VERSION_MAJOR%% - just the major integer of the version such as `1`
 # %%VERSION_MINOR%% - the major and minor integers of the version with a decimal in the middle such as `1.2`
 # %%ALIAS1%% - what's passed as the alias when passing version strings to the build script (see above)
 # %%PARAM1%% - what's passed as the paramater when passing version strings to the build script (see above)
-# %%MAIN_SHA%% - deprecated, please use %%PARAM1%%
 
 #####
 # Starting version loop.
@@ -81,20 +83,16 @@ for versionGroup in "$@"; do
 
 	string="docker build"
 
+	# Makes a version folder if it doesn't already exist
 	[[ -d "$versionShort" ]] || mkdir "$versionShort"
 
-	sed -e 's!%%PARENT%%!'"$parent"'!g' "./Dockerfile.template" > "./$versionShort/Dockerfile"
-	sed -i.bak 's/%%NAMESPACE%%/'"${namespace}"'/g' "./${versionShort}/Dockerfile"
-	sed -i.bak 's/%%MAIN_VERSION%%/'"${vgVersion}"'/g' "./${versionShort}/Dockerfile"  # will be deprecated in the future
-	sed -i.bak 's/%%VERSION_FULL%%/'"${vgVersion}"'/g' "./${versionShort}/Dockerfile"
-	sed -i.bak 's/%%VERSION_MINOR%%/'"${versionShort}"'/g' "./${versionShort}/Dockerfile"
-	sed -i.bak 's/%%VERSION_MAJOR%%/'"${vgVersionMajor}"'/g' "./${vgVersionMinor}/Dockerfile"
-	sed -i.bak 's!%%MAIN_SHA%%!'"$vgParam1"'!g' "./$versionShort/Dockerfile"  # will be deprecated in the future
-	sed -i.bak 's!%%PARAM1%%!'"$vgParam1"'!g' "./$versionShort/Dockerfile"
-	sed -i.bak 's!%%ALIAS1%%!'"$vgAlias1"'!g' "./$versionShort/Dockerfile"
+	# Parses through template variables and replaces matching strings
+	templateParser $parent $namespace $vgVersion $versionShort $vgVersionMajor $vgParam1 $vgAlias1
 
-	# This .bak thing above and below is a Linux/macOS compatibility fix
-	rm "./${versionShort}/Dockerfile.bak"
+	# Removes files associated with Linux/MacOS compatability fix for sed
+	if [[ -e "./$versionShort/Dockerfile.bak" ]]; then
+		rm "./$versionShort/Dockerfile.bak"
+	fi
 
 	string="$string --file $versionShort/Dockerfile"
 
@@ -108,6 +106,10 @@ for versionGroup in "$@"; do
 		string="${string}  -t ${tagless_image}:${vgAlias1}"
 	fi
 
+	if [[ -n $vgParam1 ]]; then
+		string="${string}  -t ${tagless_image}:${versionShort}-${vgParam1}"
+	fi
+
 	string="$string ."
 
 	echo "$string" >> ./build-images.sh
@@ -118,6 +120,7 @@ for versionGroup in "$@"; do
 	echo "docker push ${tagless_image}:${vgVersion}" >> ./push-images.sh
 
 	# potentially push semver alias tag
+	
 	if [[ $versionShort != "$vgVersion" ]]; then
 		echo "docker push ${tagless_image}:${versionShort}" >> ./push-images.sh
 	fi
@@ -125,6 +128,11 @@ for versionGroup in "$@"; do
 	# potentially push alias tag
 	if [[ -n $vgAlias1 ]]; then
 		echo "docker push ${tagless_image}:${vgAlias1}" >> ./push-images.sh
+	fi
+
+	#potentially push param tag
+	if [[ -n $vgParam1 ]]; then
+		echo "docker push ${tagless_image}:${versionShort}-${vgParam1}" >> ./push-images.sh
 	fi
 
 	# Build a Dockerfile for each variant
@@ -140,15 +148,37 @@ for versionGroup in "$@"; do
 			echo "Error: Variant ${variant} doesn't exists. Exiting."
 			exit 2
 		fi
-
 		# If version/variant directory doesn't exist, create it
 		[[ -d "${versionShort}/${variant}" ]] || mkdir "${versionShort}/${variant}"
 
-		sed -e 's!%%PARENT%%!'"$repository"'!g' "${variantTemplateFile}" > "./${versionShort}/${variant}/Dockerfile"
-		sed -i.bak 's/%%PARENT_TAG%%/'"${vgVersion}"'/g' "./${versionShort}/${variant}/Dockerfile"
+		# Accounts for different variants and parses multiple template variables in order to generate Dockerfile
+		# Hardcoded variables are default values
+		if [[ $variant == "browsers" ]]; then
+			variantParser $parent $namespace $vgVersion $versionShort $vgVersionMajor openjdk-11 $vgAlias1
+		fi
+		if [[ $variant == "node" ]]; then
+			variantParser $parent $namespace $vgVersion $versionShort $vgVersionMajor lts $vgAlias1
+		fi
+	
+		if [[ $vgParam1 =~ v[0-9][0-9] ]] && [[ $variant = "node" ]]; then
+			[[ -d "${versionShort}/node-${vgParam1}" ]] || mkdir "${versionShort}/node-${vgParam1}"
+			nodeParser $repository $namespace $vgVersion $versionShort $vgVersionMajor $vgParam1 $vgAlias1
+			echo "docker push ${tagless_image}:${vgAlias1}-node-${vgParam1}" >> ./push-images.sh
+		fi
+		if [[ $vgParam1 =~ open ]] && [[ $variant = "browsers" ]]; then
+			[[ -d "${versionShort}/browsers-${vgParam1}" ]] || mkdir "${versionShort}/browsers-${vgParam1}"
+			browserParser $repository $namespace $vgVersion $versionShort $vgVersionMajor $vgParam1 $vgAlias1
+			echo "docker push ${tagless_image}:${vgAlias1}-browsers-${vgParam1}" >> ./push-images.sh
+		fi
 
 		# This .bak thing above and below is a Linux/macOS compatibility fix
-		rm "./${versionShort}/${variant}/Dockerfile.bak"
+		if [[ -f "./${versionShort}/${variant}/Dockerfile.bak" ]]; then
+			rm "./${versionShort}/${variant}/Dockerfile.bak"
+		fi
+
+		if [[ -f "./${versionShort}/${variant}-${vgParam1}/Dockerfile.bak" ]]; then
+			rm "./${versionShort}/${variant}-${vgParam1}/Dockerfile.bak"
+		fi
 
 		string="docker build"
 		string="$string --file ${versionShort}/${variant}/Dockerfile"
@@ -161,6 +191,10 @@ for versionGroup in "$@"; do
 
 		if [[ -n $vgAlias1 ]]; then
 			string="${string}  -t ${tagless_image}:${vgAlias1}-${variant}"
+		fi
+
+		if [[ -n $vgParam1 ]]; then
+			string="${string}  -t ${tagless_image}:${vgAlias1}-${variant}-${vgParam1}"
 		fi
 
 		string="$string ."
