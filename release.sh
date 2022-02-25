@@ -2,6 +2,8 @@
 
 # Much of the version processing logic is repeated from gen-dockerfiles.sh
 # This should be de-duped sometime in the future when this logic is solidified
+
+source check-versions.sh
 versions=()
 
 for versionGroup in "$@"; do
@@ -21,6 +23,13 @@ for versionGroup in "$@"; do
 
 	vgVersion=$(cut -d "v" -f2- <<< "$versionGroup")
 	versions+=( "$vgVersion" )
+
+	# Version checking
+	if [[ $vgAlias1 == "lts" ]]; then
+		checkVersions "$vgVersion" "$PREV_LTS"
+	else
+		checkVersions "$vgVersion" "$PREV_VERSION"
+	fi
 done
 
 branchName=""

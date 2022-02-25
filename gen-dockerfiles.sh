@@ -5,6 +5,10 @@
 
 # Import repo-specific image information
 source ./manifest
+# Import scripts that compares user version arguement with old alias file 
+# to determine if Dockerfiles will be generated
+source check-versions.sh
+chmod +x check-versions.sh
 tagless_image=${namespace}/${repository}
 
 # Prepare the build and push files. Originally we only needed a build file but
@@ -94,6 +98,13 @@ for versionGroup in "$@"; do
 
 	vgVersionFull=$(cut -d "v" -f2- <<< "$versionGroup")
 	vgVersion=$vgVersionFull  # will be deprecated in the future
+
+	# Version checking
+	if [[ $vgAlias1 == "lts" ]]; then
+		checkVersions "$vgVersion" "$PREV_LTS"
+	else
+		checkVersions "$vgVersion" "$PREV_VERSION"
+	fi
 
 	if [[ $vgVersionFull =~ ^[0-9]+\.[0-9]+ ]]; then
 		vgVersionMinor=${BASH_REMATCH[0]}
