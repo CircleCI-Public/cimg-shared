@@ -43,6 +43,37 @@ chmod +x ./push-images.sh
 # %%PARAM1%% - what's passed as the paramater when passing version strings to the build script (see above)
 # %%MAIN_SHA%% - deprecated, please use %%PARAM1%%
 
+
+#####
+# Helper functions.
+#####
+
+# Parses the bulk of the variables, regardless of if it's a main or variant image
+parse_template_variables () {
+
+	# if we're dealing with a variant
+	if [ -n "$variant" ]; then
+
+		variantPath="${variant}/"
+		sed -e 's!%%PARENT%%!'"$repository"'!g' "${variantTemplateFile}" > "./${versionShort}/${variant}/Dockerfile"
+		sed -i.bak 's/%%PARENT_TAG%%/'"${vgVersion}"'/g' "./${versionShort}/${variant}/Dockerfile"
+	else
+
+		variantPath=""
+		sed -e 's!%%PARENT%%!'"$parent"'!g' "./Dockerfile.template" > "./$versionShort/Dockerfile"
+	fi
+
+	sed -i.bak 's/%%NAMESPACE%%/'"${namespace}"'/g' "./${versionShort}/${variantPath}Dockerfile"
+	sed -i.bak 's/%%MAIN_VERSION%%/'"${vgVersion}"'/g' "./${versionShort}/${variantPath}Dockerfile"  # will be deprecated in the future
+	sed -i.bak 's/%%VERSION_FULL%%/'"${vgVersion}"'/g' "./${versionShort}/${variantPath}Dockerfile"
+	sed -i.bak 's/%%VERSION_MINOR%%/'"${versionShort}"'/g' "./${versionShort}/${variantPath}Dockerfile"
+	sed -i.bak 's/%%VERSION_MAJOR%%/'"${vgVersionMajor}"'/g' "./${vgVersionMinor}/${variantPath}Dockerfile"
+	sed -i.bak 's!%%MAIN_SHA%%!'"$vgParam1"'!g' "./$versionShort/${variantPath}Dockerfile"  # will be deprecated in the future
+	sed -i.bak 's!%%PARAM1%%!'"$vgParam1"'!g' "./$versionShort/${variantPath}Dockerfile"
+	sed -i.bak 's!%%ALIAS1%%!'"$vgAlias1"'!g' "./$versionShort/${variantPath}Dockerfile"
+}
+
+
 #####
 # Starting version loop.
 #####
@@ -83,15 +114,7 @@ for versionGroup in "$@"; do
 
 	[[ -d "$versionShort" ]] || mkdir "$versionShort"
 
-	sed -e 's!%%PARENT%%!'"$parent"'!g' "./Dockerfile.template" > "./$versionShort/Dockerfile"
-	sed -i.bak 's/%%NAMESPACE%%/'"${namespace}"'/g' "./${versionShort}/Dockerfile"
-	sed -i.bak 's/%%MAIN_VERSION%%/'"${vgVersion}"'/g' "./${versionShort}/Dockerfile"  # will be deprecated in the future
-	sed -i.bak 's/%%VERSION_FULL%%/'"${vgVersion}"'/g' "./${versionShort}/Dockerfile"
-	sed -i.bak 's/%%VERSION_MINOR%%/'"${versionShort}"'/g' "./${versionShort}/Dockerfile"
-	sed -i.bak 's/%%VERSION_MAJOR%%/'"${vgVersionMajor}"'/g' "./${vgVersionMinor}/Dockerfile"
-	sed -i.bak 's!%%MAIN_SHA%%!'"$vgParam1"'!g' "./$versionShort/Dockerfile"  # will be deprecated in the future
-	sed -i.bak 's!%%PARAM1%%!'"$vgParam1"'!g' "./$versionShort/Dockerfile"
-	sed -i.bak 's!%%ALIAS1%%!'"$vgAlias1"'!g' "./$versionShort/Dockerfile"
+	parse_template_variables
 
 	# This .bak thing above and below is a Linux/macOS compatibility fix
 	rm "./${versionShort}/Dockerfile.bak"
@@ -144,8 +167,7 @@ for versionGroup in "$@"; do
 		# If version/variant directory doesn't exist, create it
 		[[ -d "${versionShort}/${variant}" ]] || mkdir "${versionShort}/${variant}"
 
-		sed -e 's!%%PARENT%%!'"$repository"'!g' "${variantTemplateFile}" > "./${versionShort}/${variant}/Dockerfile"
-		sed -i.bak 's/%%PARENT_TAG%%/'"${vgVersion}"'/g' "./${versionShort}/${variant}/Dockerfile"
+		parse_template_variables
 
 		# This .bak thing above and below is a Linux/macOS compatibility fix
 		rm "./${versionShort}/${variant}/Dockerfile.bak"
