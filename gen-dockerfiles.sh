@@ -50,17 +50,17 @@ chmod +x ./push-images.sh
 
 # Parses the bulk of the variables, regardless of if it's a main or variant image
 parse_template_variables () {
-
-	# if we're dealing with a variant
-	if [ -n "$variant" ]; then
-
-		variantPath="${variant}/"
-		sed -e 's!%%PARENT%%!'"$repository"'!g' "${variantTemplateFile}" > "./${versionShort}/${variant}/Dockerfile"
-		sed -i.bak 's/%%PARENT_TAG%%/'"${vgVersion}"'/g' "./${versionShort}/${variant}/Dockerfile"
+	local pathVariable=${1}
+	# if we're dealing with a variant/version
+	if [ -n "$pathVariable" ]; then
+		variantPath="${pathVariable}/"
+		sed -e 's!%%PARENT%%!'"$repository"'!g' "${variantTemplateFile}" > "./${versionShort}/${pathVariable}/Dockerfile"
+		sed -i.bak 's/%%PARENT_TAG%%/'"${vgVersion}"'/g' "./${versionShort}/${pathVariable}/Dockerfile"
+		sed -i.bak 's!%%VERSION_TAG%%!'"$currentTag"'!g' "./$versionShort/${pathVariable}/Dockerfile"
 	else
-
 		variantPath=""
 		sed -e 's!%%PARENT%%!'"$parent"'!g' "./Dockerfile.template" > "./$versionShort/Dockerfile"
+		sed -i.bak 's!%%VERSION_TAG%%!'"$currentTag"'!g' "./$versionShort/Dockerfile"
 	fi
 
 	sed -i.bak 's/%%NAMESPACE%%/'"${namespace}"'/g' "./${versionShort}/${variantPath}Dockerfile"
@@ -71,8 +71,10 @@ parse_template_variables () {
 	sed -i.bak 's!%%MAIN_SHA%%!'"$vgParam1"'!g' "./$versionShort/${variantPath}Dockerfile"  # will be deprecated in the future
 	sed -i.bak 's!%%PARAM1%%!'"$vgParam1"'!g' "./$versionShort/${variantPath}Dockerfile"
 	sed -i.bak 's!%%ALIAS1%%!'"$vgAlias1"'!g' "./$versionShort/${variantPath}Dockerfile"
-}
 
+	# This .bak thing above and below is a Linux/macOS compatibility fix
+	rm "./${versionShort}/${variantPath}Dockerfile.bak"
+}
 
 #####
 # Starting version loop.
@@ -115,9 +117,6 @@ for versionGroup in "$@"; do
 	[[ -d "$versionShort" ]] || mkdir "$versionShort"
 
 	parse_template_variables
-
-	# This .bak thing above and below is a Linux/macOS compatibility fix
-	rm "./${versionShort}/Dockerfile.bak"
 
 	string="$string --file $versionShort/Dockerfile"
 
@@ -167,10 +166,7 @@ for versionGroup in "$@"; do
 		# If version/variant directory doesn't exist, create it
 		[[ -d "${versionShort}/${variant}" ]] || mkdir "${versionShort}/${variant}"
 
-		parse_template_variables
-
-		# This .bak thing above and below is a Linux/macOS compatibility fix
-		rm "./${versionShort}/${variant}/Dockerfile.bak"
+		parse_template_variables $variant
 
 		string="docker build"
 		string="$string --file ${versionShort}/${variant}/Dockerfile"
@@ -201,6 +197,14 @@ for versionGroup in "$@"; do
 		if [[ -n $vgAlias1 ]]; then
 			echo "docker push ${tagless_image}:${vgAlias1}-${variant}" >> ./push-images.sh
 		fi
+	done
+
+	for versionTag in "${versionTags[@]}"; do
+		# If version directory doesn't exist, create it
+		[[ -d "${versionShort}/${versionTag}" ]] || mkdir "${versionShort}/${versionTag}"
+
+		parse_template_variables $versionTag
+
 	done
 
 	# Build out the ALIASES file. Keeps track of aliases that have been set
