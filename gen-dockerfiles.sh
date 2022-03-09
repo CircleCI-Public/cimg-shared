@@ -166,7 +166,7 @@ for versionGroup in "$@"; do
 		# If version/variant directory doesn't exist, create it
 		[[ -d "${versionShort}/${variant}" ]] || mkdir "${versionShort}/${variant}"
 
-		parse_template_variables $variant
+		parse_template_variables "$variant"
 
 		string="docker build"
 		string="$string --file ${versionShort}/${variant}/Dockerfile"
@@ -203,7 +203,7 @@ for versionGroup in "$@"; do
 		# If version directory doesn't exist, create it
 		[[ -d "${versionShort}/${versionTag}" ]] || mkdir "${versionShort}/${versionTag}"
 
-		parse_template_variables $versionTag
+		parse_template_variables "$versionTag"
 
 	done
 
