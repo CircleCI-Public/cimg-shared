@@ -5,7 +5,7 @@
 
 repository=nothing
 parent=nothing
-variants=(node browsers)
+variants=(nothing)
 namespace=nothing
-versionTags=(9.9.9)
-currentTag=2022.01
+versionTags=(nothing)
+currentTag=nothing
