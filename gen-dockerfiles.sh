@@ -50,17 +50,30 @@ chmod +x ./push-images.sh
 
 # Parses the bulk of the variables, regardless of if it's a main or variant image
 parse_template_variables () {
-	local pathVariable=${1}
-	# if we're dealing with a variant/version
-	if [ -n "$pathVariable" ]; then
-		variantPath="${pathVariable}/"
-		sed -e 's!%%PARENT%%!'"$repository"'!g' "${variantTemplateFile}" > "./${versionShort}/${pathVariable}/Dockerfile"
-		sed -i.bak 's/%%PARENT_TAG%%/'"${vgVersion}"'/g' "./${versionShort}/${pathVariable}/Dockerfile"
-		sed -i.bak 's!%%VERSION_TAG%%!'"$currentTag"'!g' "./$versionShort/${pathVariable}/Dockerfile"
+
+	# if we're dealing with a variant
+	if [ -n "$variant" ]; then
+		variantPath="${variant}/"
+		sed -e 's!%%PARENT%%!'"$repository"'!g' "${variantTemplateFile}" > "./${versionShort}/${variant}/Dockerfile"
+		sed -i.bak 's/%%PARENT_TAG%%/'"${vgVersion}"'/g' "./${versionShort}/${variant}/Dockerfile"
+		sed -i.bak 's/%%VERSION_TAG%%/'"${currentTag}"'/g' "./${versionShort}/${variant}/Dockerfile"
+	else
+		variantPath=""
+		sed -e 's!%%PARENT%%!'"$parent"'!g' "./Dockerfile.template" > "./${versionShort}/Dockerfile"
+		sed -i.bak 's/%%VERSION_TAG%%/'"${currentTag}"'/g' "./${versionShort}/Dockerfile"
+		
+	fi
+	
+	# if we're dealing with a version tag
+	if [ -n "$versionTag" ]; then
+		variantPath="${versionTag}/"
+		sed -e 's!%%PARENT%%!'"$repository"'!g' "./Dockerfile.template" > "./${versionShort}/${versionTag}/Dockerfile"
+		sed -i.bak 's/%%PARENT_TAG%%/'"${vgVersion}"'/g' "./${versionShort}/${versionTag}/Dockerfile"
+		sed -i.bak 's/%%VERSION_TAG%%/'"${versionTag}-$parent"'/g' "./${versionShort}/${versionTag}/Dockerfile"
 	else
 		variantPath=""
 		sed -e 's!%%PARENT%%!'"$parent"'!g' "./Dockerfile.template" > "./$versionShort/Dockerfile"
-		sed -i.bak 's!%%VERSION_TAG%%!'"$currentTag"'!g' "./$versionShort/Dockerfile"
+		sed -i.bak 's/%%VERSION_TAG%%/'"${currentTag}"'/g' "./${versionShort}/Dockerfile"
 	fi
 
 	sed -i.bak 's/%%NAMESPACE%%/'"${namespace}"'/g' "./${versionShort}/${variantPath}Dockerfile"
@@ -71,9 +84,6 @@ parse_template_variables () {
 	sed -i.bak 's!%%MAIN_SHA%%!'"$vgParam1"'!g' "./$versionShort/${variantPath}Dockerfile"  # will be deprecated in the future
 	sed -i.bak 's!%%PARAM1%%!'"$vgParam1"'!g' "./$versionShort/${variantPath}Dockerfile"
 	sed -i.bak 's!%%ALIAS1%%!'"$vgAlias1"'!g' "./$versionShort/${variantPath}Dockerfile"
-
-	# This .bak thing above and below is a Linux/macOS compatibility fix
-	rm "./${versionShort}/${variantPath}Dockerfile.bak"
 }
 
 #####
@@ -169,6 +179,7 @@ for versionGroup in "$@"; do
 		parse_template_variables "$variant"
 
 		string="docker build"
+
 		string="$string --file ${versionShort}/${variant}/Dockerfile"
 
 		string="${string} -t ${tagless_image}:${vgVersion}-${variant}"
@@ -205,6 +216,21 @@ for versionGroup in "$@"; do
 
 		parse_template_variables "$versionTag"
 
+		string="$string --file $versionShort/${versionTag}/Dockerfile"
+
+		string="${string} -t ${tagless_image}:${versionTag}-${parent}"
+
+		string="$string ."
+
+		echo "$string" >> ./build-images.sh
+
+		# push main tag
+		echo "docker push ${tagless_image}:${versionTag}-${parent}" >> ./push-images.sh
+
+		# potentially push the semver alias alias tag
+		if [[ $versionShort != "$vgVersion" ]]; then
+			echo "docker push ${tagless_image}:${versionTag}-${parent}:${versionShort}" >> ./push-images.sh
+		fi
 	done
 
 	# Build out the ALIASES file. Keeps track of aliases that have been set
@@ -217,4 +243,7 @@ for versionGroup in "$@"; do
 
 		echo "${vgAlias1}=${vgVersion}" >> ALIASES
 	fi
+
+	# This .bak thing above and below is a Linux/macOS compatibility fix
+	find . -name \*.bak -type f -delete
 done
