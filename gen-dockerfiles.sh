@@ -2,7 +2,6 @@
 
 # A Docker image is a combination of REGISTRY/NAMESPACE/REPOSITORY[:TAG].
 # Registry will be ignored for now unless we move off Docker Hub.
-
 # Import repo-specific image information
 source ./manifest
 tagless_image=${namespace}/${repository}
@@ -36,43 +35,61 @@ chmod +x ./push-images.sh
 # replaced with actual valuables. Here's what's available to use:
 #
 # %%VERSION_FULL%% - the complete version passed to the script such as `1.2.3`
-# %%MAIN_VERSION%% - deprecated, please use %%VERSION_FULL%%
+# %%MAIN_VERSION%% - deprecated, please use %%VERSION_FULL%% instead
 # %%VERSION_MAJOR%% - just the major integer of the version such as `1`
 # %%VERSION_MINOR%% - the major and minor integers of the version with a decimal in the middle such as `1.2`
 # %%ALIAS1%% - what's passed as the alias when passing version strings to the build script (see above)
 # %%PARAM1%% - what's passed as the paramater when passing version strings to the build script (see above)
 # %%MAIN_SHA%% - deprecated, please use %%PARAM1%%
 
-
 #####
 # Helper functions.
 #####
 
-# Parses the bulk of the variables, regardless of if it's a main or variant image
+# Parses all template variables, regardless of if it's a main or variant image
 parse_template_variables () {
+	
+	local variantPath=${1}
+	local parent=${2}
+	local fileTemplate=${3}
+	local parentTag=${4}
+	local directory=${5}
 
-	# if we're dealing with a variant
-	if [ -n "$variant" ]; then
+	[[ -d "$directory" ]] || mkdir "$directory"
 
-		variantPath="${variant}/"
-		sed -e 's!%%PARENT%%!'"$repository"'!g' "${variantTemplateFile}" > "./${versionShort}/${variant}/Dockerfile"
-		sed -i.bak 's/%%PARENT_TAG%%/'"${vgVersion}"'/g' "./${versionShort}/${variant}/Dockerfile"
-	else
-
-		variantPath=""
-		sed -e 's!%%PARENT%%!'"$parent"'!g' "./Dockerfile.template" > "./$versionShort/Dockerfile"
-	fi
-
+	sed -e 's!%%PARENT%%!'"${parent}"'!g' "${fileTemplate}" > "./${versionShort}/${variantPath}Dockerfile"
+	sed -i.bak 's/%%PARENT_TAG%%/'"${parentTag}"'/g' "./${versionShort}/${variantPath}Dockerfile"
 	sed -i.bak 's/%%NAMESPACE%%/'"${namespace}"'/g' "./${versionShort}/${variantPath}Dockerfile"
-	sed -i.bak 's/%%MAIN_VERSION%%/'"${vgVersion}"'/g' "./${versionShort}/${variantPath}Dockerfile"  # will be deprecated in the future
+	sed -i.bak 's/%%MAIN_VERSION%%/'"${vgVersion}"'/g' "./${versionShort}/${variantPath}Dockerfile" # will be deprecated in the future
 	sed -i.bak 's/%%VERSION_FULL%%/'"${vgVersion}"'/g' "./${versionShort}/${variantPath}Dockerfile"
 	sed -i.bak 's/%%VERSION_MINOR%%/'"${versionShort}"'/g' "./${versionShort}/${variantPath}Dockerfile"
 	sed -i.bak 's/%%VERSION_MAJOR%%/'"${vgVersionMajor}"'/g' "./${vgVersionMinor}/${variantPath}Dockerfile"
-	sed -i.bak 's!%%MAIN_SHA%%!'"$vgParam1"'!g' "./$versionShort/${variantPath}Dockerfile"  # will be deprecated in the future
-	sed -i.bak 's!%%PARAM1%%!'"$vgParam1"'!g' "./$versionShort/${variantPath}Dockerfile"
-	sed -i.bak 's!%%ALIAS1%%!'"$vgAlias1"'!g' "./$versionShort/${variantPath}Dockerfile"
+	sed -i.bak 's!%%MAIN_SHA%%!'"$vgParam1"'!g' "./$versionShort/${variantPath}Dockerfile" # will be deprecated in the future
+	sed -i.bak 's!%%PARAM1%%!'"${vgParam1}"'!g' "./${versionShort}/${variantPath}Dockerfile"
+	sed -i.bak 's!%%ALIAS1%%!'"${vgAlias1}"'!g' "./${versionShort}/${variantPath}Dockerfile"
 }
 
+build_and_push() {
+	local pathing=${1}
+	local versionString=${2}
+	local versionShortString=${3}
+
+	echo "docker push $tagless_image:$versionShortString" >> ./push-images-temp.sh
+	echo "docker push $tagless_image:$versionString" >> ./push-images-temp.sh
+	echo "docker build --file $pathing/Dockerfile -t $tagless_image:$versionString -t $tagless_image:$versionShortString ." >> ./build-images-temp.sh
+
+}
+
+filepath_templating () {
+	if [[ -f "./variants/${variant}.Dockerfile.template" ]]; then
+		fileTemplate="./variants/${variant}.Dockerfile.template"
+	elif [[ -f "./shared/variants/${variant}.Dockerfile.template" ]]; then
+		fileTemplate="./shared/variants/${variant}.Dockerfile.template"
+	else 
+		echo "Error: Variant ${variant} doesn't exist. Exiting."
+		exit 2
+	fi
+}
 
 #####
 # Starting version loop.
@@ -110,99 +127,35 @@ for versionGroup in "$@"; do
 		exit 1
 	fi
 
-	string="docker build"
-
 	[[ -d "$versionShort" ]] || mkdir "$versionShort"
 
-	parse_template_variables
+	# no parentTag loop; creates Dockerfiles and variants
+	if [[ -z "${parentTags[0]}" ]]; then
+		parse_template_variables "/" "$parent" "./Dockerfile.template" "$vgVersion" "$versionShort"
+		build_and_push "$versionShort/Dockerfile" "$vgVersion" "$versionShort"
 
-	# This .bak thing above and below is a Linux/macOS compatibility fix
-	rm "./${versionShort}/Dockerfile.bak"
+		for variant in "${variants[@]}"; do
+			filepath_templating
+			parse_template_variables "$variant/" "$repository" "$fileTemplate" "$vgVersion" "$versionShort/$variant"
+			build_and_push "$versionShort/$variant" "$vgVersion-$variant" "$versionShort-$variant"
+		done
+	else
 
-	string="$string --file $versionShort/Dockerfile"
+	# parentTag loop; one Dockerfile will be created along with however many variants there are for each parentTag
+		for parentTag in "${parentTags[@]}"; do
+			if [[ -n $parentTag ]]; then
+				parse_template_variables "$parentTag/" "$parent" "./Dockerfile.template" "$parentTag" "$versionShort/$parentTag"
+				build_and_push "$versionShort/$parentTag/$variant" "$vgVersion-$parentSlug-$parentTag" "$versionShort-$parentSlug-$parentTag"
+				
+				for variant in "${variants[@]}"; do
+					filepath_templating
 
-	string="${string} -t ${tagless_image}:${vgVersion}"
-
-	if [[ $versionShort != "$vgVersion" ]]; then
-		string="${string}  -t ${tagless_image}:${versionShort}"
+					parse_template_variables "$parentTag/$variant/" "$repository" "$fileTemplate" "$vgVersion-$parentSlug-$parentTag" "$versionShort/$parentTag/$variant"
+					build_and_push "$versionShort/$parentTag/$variant" "$vgVersion-$parentSlug-$parentTag-$variant" "$versionShort-$parentSlug-$parentTag-$variant"
+				done
+			fi
+		done
 	fi
-
-	if [[ -n $vgAlias1 ]]; then
-		string="${string}  -t ${tagless_image}:${vgAlias1}"
-	fi
-
-	string="$string ."
-
-	echo "$string" >> ./build-images.sh
-
-	echo "" >> ./push-images.sh
-
-	# push main tag
-	echo "docker push ${tagless_image}:${vgVersion}" >> ./push-images.sh
-
-	# potentially push semver alias tag
-	if [[ $versionShort != "$vgVersion" ]]; then
-		echo "docker push ${tagless_image}:${versionShort}" >> ./push-images.sh
-	fi
-
-	# potentially push alias tag
-	if [[ -n $vgAlias1 ]]; then
-		echo "docker push ${tagless_image}:${vgAlias1}" >> ./push-images.sh
-	fi
-
-	# Build a Dockerfile for each variant
-	# Currently this only supports shared variants, not local variants
-	for variant in "${variants[@]}"; do
-
-		# Check if variant is local, shared, or doesn't exists
-		if [[ -f "./variants/${variant}.Dockerfile.template" ]]; then
-			variantTemplateFile="./variants/${variant}.Dockerfile.template"
-		elif [[ -f "./shared/variants/${variant}.Dockerfile.template" ]]; then
-			variantTemplateFile="./shared/variants/${variant}.Dockerfile.template"
-		else
-			echo "Error: Variant ${variant} doesn't exists. Exiting."
-			exit 2
-		fi
-
-		# If version/variant directory doesn't exist, create it
-		[[ -d "${versionShort}/${variant}" ]] || mkdir "${versionShort}/${variant}"
-
-		parse_template_variables
-
-		# This .bak thing above and below is a Linux/macOS compatibility fix
-		rm "./${versionShort}/${variant}/Dockerfile.bak"
-
-		string="docker build"
-		string="$string --file ${versionShort}/${variant}/Dockerfile"
-
-		string="${string} -t ${tagless_image}:${vgVersion}-${variant}"
-
-		if [[ $versionShort != "$vgVersion" ]]; then
-			string="${string}  -t ${tagless_image}:${versionShort}-${variant}"
-		fi
-
-		if [[ -n $vgAlias1 ]]; then
-			string="${string}  -t ${tagless_image}:${vgAlias1}-${variant}"
-		fi
-
-		string="$string ."
-
-		echo "$string" >> ./build-images.sh
-
-		# push the variant tag
-		echo "docker push ${tagless_image}:${vgVersion}-${variant}" >> ./push-images.sh
-
-		# potentially push the semver alias alias tag
-		if [[ $versionShort != "$vgVersion" ]]; then
-			echo "docker push ${tagless_image}:${versionShort}-${variant}" >> ./push-images.sh
-		fi
-
-		# potentially push the semver alias alias tag
-		if [[ -n $vgAlias1 ]]; then
-			echo "docker push ${tagless_image}:${vgAlias1}-${variant}" >> ./push-images.sh
-		fi
-	done
-
 	# Build out the ALIASES file. Keeps track of aliases that have been set
 	# without losing old versions.
 	if [[ -n $vgAlias1 ]]; then
@@ -213,4 +166,11 @@ for versionGroup in "$@"; do
 
 		echo "${vgAlias1}=${vgVersion}" >> ALIASES
 	fi
+
+	# This .bak thing fixes a Linux/macOS compatibility issue, but the files are cleaned up
+	find . -name \*.bak -type f -delete
 done
+
+cat -n push-images-temp.sh | sort -uk2 | sort -nk1 | cut -f2- >> push-images.sh
+cat -n build-images-temp.sh | sort -uk2 | sort -nk1 | cut -f2- >> build-images.sh
+rm push-images-temp.sh build-images-temp.sh
