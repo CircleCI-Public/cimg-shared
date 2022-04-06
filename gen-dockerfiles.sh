@@ -77,7 +77,6 @@ build_and_push() {
 	echo "docker push $tagless_image:$versionShortString" >> ./push-images-temp.sh
 	echo "docker push $tagless_image:$versionString" >> ./push-images-temp.sh
 	echo "docker build --file $pathing/Dockerfile -t $tagless_image:$versionString -t $tagless_image:$versionShortString ." >> ./build-images-temp.sh
-
 }
 
 filepath_templating () {
@@ -132,7 +131,7 @@ for versionGroup in "$@"; do
 	# no parentTag loop; creates Dockerfiles and variants
 	if [[ -z "${parentTags[0]}" ]]; then
 		parse_template_variables "/" "$parent" "./Dockerfile.template" "$vgVersion" "$versionShort"
-		build_and_push "$versionShort/Dockerfile" "$vgVersion" "$versionShort"
+		build_and_push "$versionShort" "$vgVersion" "$versionShort"
 
 		for variant in "${variants[@]}"; do
 			filepath_templating
