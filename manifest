@@ -7,3 +7,6 @@ repository=nothing
 parent=nothing
 variants=(nothing)
 namespace=nothing
+parentTags=(nothing)
+defaultParentTag=nothing
+parentSlug=nothing
