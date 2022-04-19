@@ -130,7 +130,7 @@ for versionGroup in "$@"; do
 
 	# no parentTag loop; creates Dockerfiles and variants
 	if [[ -z "${parentTags[0]}" ]]; then
-		parse_template_variables "/" "$parent" "./Dockerfile.template" "$vgVersion" "$versionShort"
+		parse_template_variables "" "$parent" "./Dockerfile.template" "$vgVersion" "$versionShort"
 		build_and_push "$versionShort" "$vgVersion" "$versionShort"
 
 		for variant in "${variants[@]}"; do
@@ -144,7 +144,7 @@ for versionGroup in "$@"; do
 		for parentTag in "${parentTags[@]}"; do
 			if [[ -n $parentTag ]]; then
 				parse_template_variables "$parentTag/" "$parent" "./Dockerfile.template" "$parentTag" "$versionShort/$parentTag"
-				build_and_push "$versionShort/$parentTag/$variant" "$vgVersion-$parentSlug-$parentTag" "$versionShort-$parentSlug-$parentTag"
+				build_and_push "$versionShort/$parentTag" "$vgVersion-$parentSlug-$parentTag" "$versionShort-$parentSlug-$parentTag"
 				
 				for variant in "${variants[@]}"; do
 					filepath_templating
