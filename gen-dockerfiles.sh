@@ -80,7 +80,7 @@ build_and_push() {
 	echo "docker push $tagless_image:$versionString" >> ./push-images-temp.sh
 	echo "docker build --file $pathing/Dockerfile -t $tagless_image:$versionString -t $tagless_image:$versionShortString ." >> ./build-images-temp.sh
 
-	if [[ "$defaultParentTag" == "$parentTag" ]]; then
+	if [[ -n $defaultParentTag ]] && [[ "$defaultParentTag" == "$parentTag" ]]; then
 		echo "docker tag $tagless_image:$versionString $tagless_image:$defaultString" >> ./push-images-temp.sh
 		echo "docker tag $tagless_image:$versionShortString $tagless_image:$defaultShortString" >> ./push-images-temp.sh
 	fi
