@@ -73,10 +73,17 @@ build_and_push() {
 	local pathing=${1}
 	local versionString=${2}
 	local versionShortString=${3}
+	local defaultString=${4}
+	local defaultShortString=${5}
 
 	echo "docker push $tagless_image:$versionShortString" >> ./push-images-temp.sh
 	echo "docker push $tagless_image:$versionString" >> ./push-images-temp.sh
 	echo "docker build --file $pathing/Dockerfile -t $tagless_image:$versionString -t $tagless_image:$versionShortString ." >> ./build-images-temp.sh
+
+	if [[ -n $defaultParentTag ]] && [[ "$defaultParentTag" == "$parentTag" ]]; then
+		echo "docker tag $tagless_image:$versionString $tagless_image:$defaultString" >> ./push-images-temp.sh
+		echo "docker tag $tagless_image:$versionShortString $tagless_image:$defaultShortString" >> ./push-images-temp.sh
+	fi
 }
 
 filepath_templating () {
@@ -144,13 +151,13 @@ for versionGroup in "$@"; do
 		for parentTag in "${parentTags[@]}"; do
 			if [[ -n $parentTag ]]; then
 				parse_template_variables "$parentTag/" "$parent" "./Dockerfile.template" "$parentTag" "$versionShort/$parentTag"
-				build_and_push "$versionShort/$parentTag" "$vgVersion-$parentSlug-$parentTag" "$versionShort-$parentSlug-$parentTag"
+				build_and_push "$versionShort/$parentTag" "$vgVersion-$parentSlug-$parentTag" "$versionShort-$parentSlug-$parentTag" "$vgVersion" "$versionShort"
 				
 				for variant in "${variants[@]}"; do
 					filepath_templating
 
 					parse_template_variables "$parentTag/$variant/" "$repository" "$fileTemplate" "$vgVersion-$parentSlug-$parentTag" "$versionShort/$parentTag/$variant"
-					build_and_push "$versionShort/$parentTag/$variant" "$vgVersion-$parentSlug-$parentTag-$variant" "$versionShort-$parentSlug-$parentTag-$variant"
+					build_and_push "$versionShort/$parentTag/$variant" "$vgVersion-$parentSlug-$parentTag-$variant" "$versionShort-$parentSlug-$parentTag-$variant" "$vgVersion-$variant" "$versionShort-$variant"
 				done
 			fi
 		done
