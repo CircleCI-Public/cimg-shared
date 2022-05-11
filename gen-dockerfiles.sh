@@ -76,6 +76,9 @@ build_and_push() {
 	local defaultString=${4}
 	local defaultShortString=${5}
 
+	# every version loop will generate these basic docker tags
+	# if parentTags are enabled, then additional tags will be generated in the parentTag loop
+	# the defaultString is referenced as the tag that should be given by defauly for either a parent Tag or an alias
 	echo "docker push $tagless_image:$versionShortString" >> ./push-images-temp.sh
 	echo "docker push $tagless_image:$versionString" >> ./push-images-temp.sh
 	echo "docker build --file $pathing/Dockerfile -t $tagless_image:$versionString -t $tagless_image:$versionShortString ." >> ./build-images-temp.sh
@@ -83,6 +86,11 @@ build_and_push() {
 	if [[ -n $defaultParentTag ]] && [[ "$defaultParentTag" == "$parentTag" ]]; then
 		echo "docker tag $tagless_image:$versionString $tagless_image:$defaultString" >> ./push-images-temp.sh
 		echo "docker tag $tagless_image:$versionShortString $tagless_image:$defaultShortString" >> ./push-images-temp.sh
+	fi
+	
+	if [[ -n $vgAlias1 ]]; then
+		echo "docker tag $tagless_image:$versionString $tagless_image:$defaultString" >> ./push-images-temp.sh
+		echo "docker tag $tagless_image:$versionShortString $tagless_image:$defaultString" >> ./push-images-temp.sh
 	fi
 }
 
@@ -138,12 +146,12 @@ for versionGroup in "$@"; do
 	# no parentTag loop; creates Dockerfiles and variants
 	if [[ -z "${parentTags[0]}" ]]; then
 		parse_template_variables "" "$parent" "./Dockerfile.template" "$vgVersion" "$versionShort"
-		build_and_push "$versionShort" "$vgVersion" "$versionShort"
+		build_and_push "$versionShort" "$vgVersion" "$versionShort" "$vgAlias1"
 
 		for variant in "${variants[@]}"; do
 			filepath_templating
 			parse_template_variables "$variant/" "$repository" "$fileTemplate" "$vgVersion" "$versionShort/$variant"
-			build_and_push "$versionShort/$variant" "$vgVersion-$variant" "$versionShort-$variant"
+			build_and_push "$versionShort/$variant" "$vgVersion-$variant" "$versionShort-$variant" "$vgAlias1-$variant"
 		done
 	else
 
@@ -155,7 +163,6 @@ for versionGroup in "$@"; do
 				
 				for variant in "${variants[@]}"; do
 					filepath_templating
-
 					parse_template_variables "$parentTag/$variant/" "$repository" "$fileTemplate" "$vgVersion-$parentSlug-$parentTag" "$versionShort/$parentTag/$variant"
 					build_and_push "$versionShort/$parentTag/$variant" "$vgVersion-$parentSlug-$parentTag-$variant" "$versionShort-$parentSlug-$parentTag-$variant" "$vgVersion-$variant" "$versionShort-$variant"
 				done
