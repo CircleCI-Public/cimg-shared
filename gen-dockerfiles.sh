@@ -78,7 +78,7 @@ build_and_push() {
 
 	# every version loop will generate these basic docker tags
 	# if parentTags are enabled, then additional tags will be generated in the parentTag loop
-	# the defaultString is referenced as the tag that should be given by defauly for either a parent Tag or an alias
+	# the defaultString is referenced as the tag that should be given by default for either a parent Tag or an alias
 	echo "docker push $tagless_image:$versionShortString" >> ./push-images-temp.sh
 	echo "docker push $tagless_image:$versionString" >> ./push-images-temp.sh
 	echo "docker build --file $pathing/Dockerfile -t $tagless_image:$versionString -t $tagless_image:$versionShortString ." >> ./build-images-temp.sh
