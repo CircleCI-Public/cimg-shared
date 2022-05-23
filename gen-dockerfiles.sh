@@ -85,14 +85,18 @@ build_and_push() {
 	echo "docker build --file $pathing/Dockerfile -t $tagless_image:$versionString -t $tagless_image:$versionShortString ." >> ./build-images-temp.sh
 
 	if [[ -n $defaultParentTag ]] && [[ "$defaultParentTag" == "$parentTag" ]]; then
-		echo "docker tag $tagless_image:$versionString $tagless_image:$defaultString" >> ./push-images-temp.sh
-		echo "docker tag $tagless_image:$versionShortString $tagless_image:$defaultShortString" >> ./push-images-temp.sh
+		{ 
+			echo "docker tag $tagless_image:$versionString $tagless_image:$defaultString"
+			echo "docker tag $tagless_image:$versionShortString $tagless_image:$defaultShortString"
+		} >> ./push-images-temp.sh
 	fi
 	
 	if [[ -n $vgAlias1 ]] && [[ "$vgVersion" = "$aliasGroup" ]]; then
-		echo "docker tag $tagless_image:$versionString $tagless_image:$defaultString" >> ./push-images-temp.sh
-		echo "docker tag $tagless_image:$versionShortString $tagless_image:$defaultString" >> ./push-images-temp.sh
-		echo "docker push $tagless_image:$defaultString" >> ./push-images-temp.sh
+		{
+			echo "docker tag $tagless_image:$versionString $tagless_image:$defaultString"
+			echo "docker tag $tagless_image:$versionShortString $tagless_image:$defaultString"
+			echo "docker push $tagless_image:$defaultString"
+		} >> ./push-images-temp.sh
 	fi
 }
 
