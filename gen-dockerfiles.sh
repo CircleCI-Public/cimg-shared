@@ -94,7 +94,6 @@ build_and_push() {
 	if [[ -n $vgAlias1 ]] && [[ "$vgVersion" = "$aliasGroup" ]]; then
 		{
 			echo "docker tag $tagless_image:$versionString $tagless_image:$defaultString"
-			echo "docker tag $tagless_image:$versionShortString $tagless_image:$defaultString"
 			echo "docker push $tagless_image:$defaultString"
 		} >> ./push-images-temp.sh
 	fi
