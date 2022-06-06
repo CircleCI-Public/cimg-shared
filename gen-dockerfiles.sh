@@ -177,7 +177,7 @@ for versionGroup in "$@"; do
 	fi
 	# Build out the ALIASES file. Keeps track of aliases that have been set
 	# without losing old versions.
-	if [[ -n $vgAlias1 ]]; then
+	if [[ -n $vgAlias1 ]] && [[ $aliasGroup = "$versionGroup" ]]; then
 		if [[ -f ALIASES ]]; then
 			# Make sure the current alias isn't in the file.
 			grep -v "${vgAlias1}" ./ALIASES > ./TEMP && mv ./TEMP ./ALIASES
