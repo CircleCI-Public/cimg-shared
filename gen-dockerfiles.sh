@@ -17,6 +17,8 @@ echo "#!/usr/bin/env bash" > ./push-images.sh
 echo "# Do not edit by hand; please use build scripts/templates to make changes" >> ./push-images.sh
 chmod +x ./push-images.sh
 
+export CREATE_VERSIONS=("$@")
+
 # A version can be a major.minor or major.minor.patch version string.
 # An alias can be passed right after the version with an equal sign (=).
 # An additional parameter can be passed with a hash (#) sign.
@@ -191,6 +193,18 @@ for versionGroup in "$@"; do
 	# This .bak thing fixes a Linux/macOS compatibility issue, but the files are cleaned up
 	find . -name \*.bak -type f -delete
 done
+
+if [[ -n "${CREATE_VERSIONS}" ]]; then
+		# Make sure the current alias isn't in the file.
+	if [[ -f GEN-CHECK ]]; then
+		grep -v "${CREATE_VERSIONS}" ./GEN-CHECK > ./TEMP2 && mv ./TEMP2 ./GEN-CHECK
+	fi
+
+	echo "GEN_CHECK=($@)" > GEN-CHECK
+	if [[ -f TEMP2 ]]; then
+		rm ./TEMP2
+	fi
+fi
 
 cat -n push-images-temp.sh | sort -uk2 | sort -nk1 | cut -f2- >> push-images.sh
 cat -n build-images-temp.sh | sort -uk2 | sort -nk1 | cut -f2- >> build-images.sh
