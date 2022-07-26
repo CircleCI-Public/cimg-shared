@@ -120,16 +120,17 @@ filepath_templating () {
 }
 
 generate_tests() {
-	[[ -d tests ]] || mkdir tests
+	[[ -d tests ]] || mkdir -p tests
+	[[ -d tests/test-templates ]] || mkdir -p tests-templates
 	local testVersion=$1
 	local testTag=$2
 	local 
 	if [[ "$testVersion" == "$versionString" ]]; then
-		MANIFEST_ENV=$repository yq e ".test-versions.versionLong.[env(MANIFEST_ENV)] += [\"$testVersion\"]" test-templates/"$repository"-vars.yml > tests/"$testTag"-test.yml
-		MANIFEST_ENV=$repository yq e ".test-versions.versionVariantLong.[env(MANIFEST_ENV)] += [\"$testVersion\"]" test-templates/"$repository"-vars.yml > tests/"$testTag"-test.yml
+		MANIFEST_ENV=$repository yq e ".test-versions.versionLong.[env(MANIFEST_ENV)] += [\"$testVersion\"]" tests/test-templates/"$repository"-vars.yml > tests/"$testTag"-test.yml
+		MANIFEST_ENV=$repository yq e ".test-versions.versionVariantLong.[env(MANIFEST_ENV)] += [\"$testVersion\"]" tests/test-templates/"$repository"-vars.yml > tests/"$testTag"-test.yml
 	else
-		MANIFEST_ENV=$repository yq e ".test-versions.versionShort.[env(MANIFEST_ENV)] += [\"$testVersion\"]" test-templates/"$repository"-vars.yml > tests/"$testTag"-test.yml
-		MANIFEST_ENV=$repository yq e ".test-versions.versionVariantShort.[env(MANIFEST_ENV)] += [\"$testVersion\"]" test-templates/"$repository"-vars.yml > tests/"$testTag"-test.yml
+		MANIFEST_ENV=$repository yq e ".test-versions.versionShort.[env(MANIFEST_ENV)] += [\"$testVersion\"]" tests/test-templates/"$repository"-vars.yml > tests/"$testTag"-test.yml
+		MANIFEST_ENV=$repository yq e ".test-versions.versionVariantShort.[env(MANIFEST_ENV)] += [\"$testVersion\"]" tests/test-templates/"$repository"-vars.yml > tests/"$testTag"-test.yml
 	fi
 }
 
