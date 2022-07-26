@@ -73,7 +73,7 @@ parse_template_variables () {
 
 build_and_push() {
 	local pathing=${1}
-	local versionString=${2}
+	versionString=${2}
 	local versionShortString=${3}
 	local defaultString=${4}
 	local defaultShortString=${5}
@@ -85,6 +85,8 @@ build_and_push() {
 	echo "docker push $tagless_image:$versionShortString" >> ./push-images-temp.sh
 	echo "docker push $tagless_image:$versionString" >> ./push-images-temp.sh
 	echo "docker build --file $pathing/Dockerfile -t $tagless_image:$versionString -t $tagless_image:$versionShortString ." >> ./build-images-temp.sh
+	generate_tests "$vgVersion" "$tagless_image:$versionString" 
+	generate_tests "$versionShort" "$tagless_image:$versionShortString"
 
 	if [[ -n $defaultParentTag ]] && [[ "$defaultParentTag" == "$parentTag" ]]; then
 		{ 
@@ -93,6 +95,8 @@ build_and_push() {
 			echo "docker push $tagless_image:$defaultShortString"
 			echo "docker push $tagless_image:$defaultString"
 		} >> ./push-images-temp.sh
+		generate_tests "$vgVersion" "$tagless_image:$defaultString" 
+		generate_tests "$versionShort" "$tagless_image:$defaultShortString"
 	fi
 	
 	if [[ -n $vgAlias1 ]] && [[ "$vgVersion" = "$aliasGroup" ]]; then
@@ -100,6 +104,7 @@ build_and_push() {
 			echo "docker tag $tagless_image:$versionString $tagless_image:$defaultString"
 			echo "docker push $tagless_image:$defaultString"
 		} >> ./push-images-temp.sh
+		generate_tests "$vgVersion" "$tagless_image:$defaultString" 
 	fi
 }
 
@@ -111,6 +116,20 @@ filepath_templating () {
 	else 
 		echo "Error: Variant ${variant} doesn't exist. Exiting."
 		exit 2
+	fi
+}
+
+generate_tests() {
+	[[ -d tests ]] || mkdir tests
+	local testVersion=$1
+	local testTag=$2
+	local 
+	if [[ "$testVersion" == "$versionString" ]]; then
+		MANIFEST_ENV=$repository yq e ".test-versions.versionLong.[env(MANIFEST_ENV)] += [\"$testVersion\"]" test-templates/$repository-vars.yml > tests/$testTag-test.yml
+		MANIFEST_ENV=$repository yq e ".test-versions.versionVariantLong.[env(MANIFEST_ENV)] += [\"$testVersion\"]" test-templates/$repository-vars.yml > tests/$testTag-test.yml
+	else
+		MANIFEST_ENV=$repository yq e ".test-versions.versionShort.[env(MANIFEST_ENV)] += [\"$testVersion\"]" test-templates/$repository-vars.yml > tests/$testTag-test.yml
+		MANIFEST_ENV=$repository yq e ".test-versions.versionVariantShort.[env(MANIFEST_ENV)] += [\"$testVersion\"]" test-templates/$repository-vars.yml > tests/$testTag-test.yml
 	fi
 }
 
