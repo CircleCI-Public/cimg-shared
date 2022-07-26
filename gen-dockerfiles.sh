@@ -125,11 +125,11 @@ generate_tests() {
 	local testTag=$2
 	local 
 	if [[ "$testVersion" == "$versionString" ]]; then
-		MANIFEST_ENV=$repository yq e ".test-versions.versionLong.[env(MANIFEST_ENV)] += [\"$testVersion\"]" test-templates/$repository-vars.yml > tests/$testTag-test.yml
-		MANIFEST_ENV=$repository yq e ".test-versions.versionVariantLong.[env(MANIFEST_ENV)] += [\"$testVersion\"]" test-templates/$repository-vars.yml > tests/$testTag-test.yml
+		MANIFEST_ENV=$repository yq e ".test-versions.versionLong.[env(MANIFEST_ENV)] += [\"$testVersion\"]" test-templates/"$repository"-vars.yml > tests/$testTag-test.yml
+		MANIFEST_ENV=$repository yq e ".test-versions.versionVariantLong.[env(MANIFEST_ENV)] += [\"$testVersion\"]" test-templates/"$repository"-vars.yml > tests/$testTag-test.yml
 	else
-		MANIFEST_ENV=$repository yq e ".test-versions.versionShort.[env(MANIFEST_ENV)] += [\"$testVersion\"]" test-templates/$repository-vars.yml > tests/$testTag-test.yml
-		MANIFEST_ENV=$repository yq e ".test-versions.versionVariantShort.[env(MANIFEST_ENV)] += [\"$testVersion\"]" test-templates/$repository-vars.yml > tests/$testTag-test.yml
+		MANIFEST_ENV=$repository yq e ".test-versions.versionShort.[env(MANIFEST_ENV)] += [\"$testVersion\"]" test-templates/"$repository"-vars.yml > tests/$testTag-test.yml
+		MANIFEST_ENV=$repository yq e ".test-versions.versionVariantShort.[env(MANIFEST_ENV)] += [\"$testVersion\"]" test-templates/"$repository"-vars.yml > tests/$testTag-test.yml
 	fi
 }
 
