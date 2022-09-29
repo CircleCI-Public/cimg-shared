@@ -88,7 +88,7 @@ build_and_push() {
 	{
 		echo "docker context create cimg"
 		echo "docker buildx create --use cimg"
-		echo "docker buildx build --platform=linux/amd64,linux/arm64 --file $pathing/Dockerfile -t $tagless_image:$versionString -t $tagless_image:$versionShortString ."
+		echo "docker buildx build --push --platform=linux/amd64,linux/arm64 --file $pathing/Dockerfile -t $tagless_image:$versionString -t $tagless_image:$versionShortString ."
 	} >> ./build-images-temp.sh
 
 	if [[ -n $defaultParentTag ]] && [[ "$defaultParentTag" == "$parentTag" ]]; then
