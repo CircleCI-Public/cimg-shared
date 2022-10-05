@@ -32,7 +32,7 @@ RUN	printf '#!/bin/sh\nXvfb :99 -screen 0 1280x1024x24 &\nexec "$@"\n' | sudo te
 	sudo chmod +x /docker-entrypoint.sh
 
 # Install a single version of Firefox. This isn't intended to be a regularly
-# updated thing. Instead, if this version of Firefox isn't want the end user
+# updated thing. Instead, if this version of Firefox isn't what the end user
 # wants they should install a different version via the Browser Tools Orb.
 #
 # Canonical made a major technology change in how Firefox is installed from
@@ -50,7 +50,7 @@ RUN echo 'deb http://us.archive.ubuntu.com/ubuntu/ focal-updates main' | sudo te
 	firefox --version
 
 # Install a single version of Google Chrome Stable. This isn't intended to be a
-# regularly updated thing. Instead, if this version of Chrome isn't want the
+# regularly updated thing. Instead, if this version of Chrome isn't what the
 # end user wants they should install a different version via the Browser Tools
 # Orb.
 RUN wget -q -O - "https://dl.google.com/linux/linux_signing_key.pub" | sudo apt-key add - && \
