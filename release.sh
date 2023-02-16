@@ -48,8 +48,13 @@ fi
 
 defaultBranch=$(git remote show origin | grep 'HEAD branch' | cut -d' ' -f5)
 
-git checkout -b "${branchName}" "${defaultBranch}"
-shared/gen-dockerfiles.sh "$@"
-git add .
-git commit -m "${commitMSG}"
-git push -u origin "${branchName}"
+if [[ -n $(git ls-remote --exit-code --heads origin "$branchName") ]]; then
+	echo "Branch already exists. Please check the branch or PR"
+	exit 1
+else
+	git checkout -b "${branchName}" "${defaultBranch}"
+	shared/gen-dockerfiles.sh "$@"
+	git add .
+	git commit -m "${commitMSG}"
+	git push -u origin "${branchName}"
+fi
