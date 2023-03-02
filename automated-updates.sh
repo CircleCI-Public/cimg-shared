@@ -1,16 +1,5 @@
 #!/usr/bin/env bash
-# extglob is enabled for extended and advanced globbing, which is needed for the OpenJDK images
-shopt -s extglob
-
 vers=()
-
-###
-  # the next three functions work as the version string parsers and are what decides which versions go into the vers array
-  # versionEqual checks for equality; in which case the version is skipped because it is considered up to date
-  # versionGTE checks if the version is greater, in which case we use that value
-  # newVers is a result of if a given directory, dated or by major.minor, exists; if is does, then we check the version currently
-  # inside the Dockerfile, otherwise, we know the version being passed is new because it is not being tracked
-###
 
 versionEqual() {
   newVersion=$1
@@ -24,6 +13,11 @@ versionEqual() {
   fi
 }
 
+###
+  # versionGreaterThan checks if the version is greater, in which case we return and use generate the version string for that value in
+  # a separate function.
+###
+
 versionGreaterThan() {
   if [ "$(printf '%s\n' "$newVersion" "$currentVersion" | sort -V | head -n1)" = "$currentVersion" ]; then
     echo "Parsed version $newVersion is greater than $currentVersion"
@@ -35,9 +29,8 @@ versionGreaterThan() {
 }
 
 ###
-  # directory check is  a helper function to check the given directory in order to call newVers or not; it is enabled
-  # by the "searchTerm" variable, which is nested within each "get" function in order to determine the currentVersion we are
-  # comparing the newVersion to
+  # directory check is a helper function to check the given directory in order to generate a version string. It's enabled by the
+  # searchTerm variable comparing the newVersion to the currentVersion
 ###
 
 directoryCheck() {
@@ -54,13 +47,12 @@ directoryCheck() {
 }
 
 generateVersions () {
-  local dirtyVersion=$1
-  local cut=$2
+  local cut=$1
 
   if [[ -n $cut ]]; then
     newVersion=${cut}
   else
-    newVersion=${dirtyVersion}
+    newVersion=${version}
   fi
 
   if [[ $newVersion =~ ([0-9]+\.[0-9]+\.[0-9]) ]]; then
@@ -108,6 +100,7 @@ trimmer() {
 }
 
 # some images, like clojure and android, require specific URLs parsed from the web
+
 getParsedURL() {
   local URL=$1
   local searchString=$2
