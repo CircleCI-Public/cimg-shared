@@ -100,6 +100,7 @@ generateSearchTerms () {
   fi
 
   SEARCH_TERM=$(trimmer "$trimCharacters" <<< "$currVer")
+  export SEARCH_TERM
 }
 
 trimmer() {
