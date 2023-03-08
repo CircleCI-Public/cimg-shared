@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 vers=()
 
+###
+  # Checks if the version variables are equal to each other; if versionGreaterThan evalutes to true, the version string
+  # that will be passed to ./shared/release.sh will be generated and added to the vers array
+###
+
 versionEqual() {
   newVersion=$1
   currentVersion=$2
@@ -17,8 +22,8 @@ versionEqual() {
 }
 
 ###
-  # versionGreaterThan checks if the version is greater, in which case we return and use generate the version string for that value in
-  # a separate function.
+  # versionGreaterThan checks if the version is greater, in which case we return a code that will then be used to determine whether
+  # a version string will be generated
 ###
 
 versionGreaterThan() {
@@ -34,11 +39,17 @@ versionGreaterThan() {
 ###
   # directory check is a helper function to check the given directory in order to generate a version string. It's enabled by the
   # searchTerm variable comparing the newVersion to the currentVersion
+  # NOTE: because images have varying build parameters, the builtParam variable should be specified within a specific image repo
+  # otherwise, the default is ""
 ###
 
 directoryCheck() {
   local directory=$1
   local searchTerm=$2
+
+  if [ -z "$builtParam" ]; then
+    builtParam=""
+  fi
 
   if [ -d "$directory" ]; then
     currentVersion=$searchTerm
@@ -48,6 +59,12 @@ directoryCheck() {
     generateVersionString "$newVersion" "$builtParam"
   fi
 }
+
+###
+  # generateVersions will help parse out the versions needed. this functions similarly to what already exists in ./shared/gen-dockerfiles
+  # however, since we are pulling from a source, some parsing needs to happen; an example of ${cut} would be something like:
+  # $(cut -d 'v' -f2 <<< "$version")" or just "$version" if no edits need to be made
+###
 
 generateVersions () {
   local cut=$1
@@ -69,6 +86,11 @@ generateVersions () {
   fi
 }
 
+###
+  # some cimgs require a separate parameter to specify things like a URL. this function builds the full string to be included
+  # in the vers array
+###
+
 generateVersionString() {
   local version=$1
 
@@ -80,6 +102,12 @@ generateVersionString() {
 
   vers+=( "$versionString" )
 }
+
+###
+  # this function attempts to find the values associated with a variable in a specified Dockerfile. This is the basis for comparison
+  # e.g newVersion vs currentVersion or an entire string, URL, etc that may need to be replaced
+  #
+###
 
 generateSearchTerms () {
   local searchFor=$1
@@ -97,6 +125,8 @@ generateSearchTerms () {
   SEARCH_TERM=$(trimmer "$trimCharacters" <<< "$currVer")
   export SEARCH_TERM
 }
+
+# just in case a variable needs to be trimmed. space separated list of characters to be trimmed.
 
 trimmer() {
   tr -d "$@"
