@@ -15,9 +15,6 @@ versionEqual() {
     return 1
   else
     versionGreaterThan "$newVersion" "$currentVersion"
-    if [[ $(eval echo $?) -eq 0 ]]; then
-      generateVersionString "$newVersion" "$builtParam"
-    fi
   fi
 }
 
