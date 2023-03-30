@@ -54,6 +54,7 @@ directoryCheck() {
     versionEqual "$newVersion" "$currentVersion"
   else
     generateVersionString "$newVersion" "$builtParam"
+    return 1
   fi
 }
 
@@ -140,7 +141,7 @@ getParsedURL() {
 
 ###
   # replaceVersions, instead of tracking the version being parsed, simply gets the latest version/url for a specific software and
-  # replaces what is in the Dockerfile by specifying the the "search term", which should exist in the Dockerfile as an ENV
+  # replaces what is in the Dockerfile by specifying the "search term", which should exist in the Dockerfile as an ENV
   # variable. The "software version" represents the actual version string of the software in a given direectory's Dockerfile
 ###
 
