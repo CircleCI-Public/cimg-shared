@@ -49,8 +49,8 @@ fi
 defaultBranch=$(git remote show origin | grep 'HEAD branch' | cut -d' ' -f5)
 
 if ! echo $- | grep -q "i" && [ -n "$BASH_ENV" ] && [ -f "$BASH_ENV" ]; then
-	echo "export branchName=$branchName" >> "$BASH_ENV"
-	echo "export commitMSG=$commitMSG" >> "$BASH_ENV"
+	echo "export branchName" >> "$BASH_ENV"
+	echo "export commitMSG" >> "$BASH_ENV"
 fi
 
 git checkout -b "${branchName}" "${defaultBranch}"
