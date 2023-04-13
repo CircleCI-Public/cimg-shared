@@ -46,17 +46,15 @@ elif [[ ${#versions[@]} -gt 4 ]]; then
 	commitMSG="Pub: ${versions[0]},${versions[1]},${versions[2]},${versions[3]}, and more. [release]"
 fi
 
-# defaultBranch=$(git remote show origin | grep 'HEAD branch' | cut -d' ' -f5)
+defaultBranch=$(git remote show origin | grep 'HEAD branch' | cut -d' ' -f5)
 
 if ! echo $- | grep -q "i" && [ -n "$BASH_ENV" ] && [ -f "$BASH_ENV" ]; then
 	echo "export branchName=$branchName" >> "$BASH_ENV"
+	echo "export commitMSG=$commitMSG" >> "$BASH_ENV"
 fi
 
-echo "$BASH_ENV bash env"
-echo "$branchName branchName"
-
-# git checkout -b "${branchName}" "${defaultBranch}"
-# shared/gen-dockerfiles.sh "$@"
-# git add .
-# git commit -m "${commitMSG}"
-# git push -u origin "${branchName}"
+git checkout -b "${branchName}" "${defaultBranch}"
+shared/gen-dockerfiles.sh "$@"
+git add .
+git commit -m "${commitMSG}"
+git push -u origin "${branchName}"
