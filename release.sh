@@ -53,4 +53,4 @@ shared/gen-dockerfiles.sh "$@"
 git add .
 git commit -m "${commitMSG}"
 git push -u origin "${branchName}"
-gh pr create --title "$commitMSG" --head "$branchName"
+gh pr create --title "$commitMSG" --head "$branchName" --body "$commitMSG"
