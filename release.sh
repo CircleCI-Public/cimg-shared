@@ -53,4 +53,10 @@ shared/gen-dockerfiles.sh "$@"
 git add .
 git commit -m "${commitMSG}"
 git push -u origin "${branchName}"
-gh pr create --title "$commitMSG" --head "$branchName" --body "$commitMSG"
+
+if [ "$(command -v gh)" ]; then
+	gh pr create --title "$commitMSG" --head "$branchName" --body "$commitMSG"
+else
+  echo "PR was not created automatically. Please install gh or create a PR manually"
+	exit 1
+fi
