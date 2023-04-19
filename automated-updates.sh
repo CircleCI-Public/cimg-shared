@@ -166,3 +166,17 @@ replaceVersions() {
     find . -name \*.bak -type f -delete
   fi
 }
+
+###
+  # generateDatedTags generates tags in the form '2023.03'
+###
+generateDatedTags() {
+  CURRENTMONTH=$(date +%m)
+  CURRENTYEAR=$(date +%Y)
+
+  RELEASE+=$CURRENTYEAR
+  RELEASE+="."
+  RELEASE+=$CURRENTMONTH
+
+  export RELEASE
+}
