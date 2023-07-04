@@ -93,9 +93,9 @@ build_and_push() {
 	if [[ -z "$arm64" ]]; then
 		echo "docker build --file $pathing/Dockerfile -t $tagless_image:$versionString -t $tagless_image:$versionShortString --platform linux/amd64 ." >> ./build-images-temp.sh
 	elif [[ $pathing == *"browsers"* ]]; then
-		echo "docker buildx build --platform=linux/amd64 --file $pathing/Dockerfile -t $tagless_image:$versionString -t $tagless_image:$versionShortString ."
+		echo "docker buildx build --platform=linux/amd64 --file $pathing/Dockerfile -t $tagless_image:$versionString -t $tagless_image:$versionShortString ." >> ./build-images-temp.sh
 	else
-		echo "docker buildx build --platform=linux/amd64,linux/arm64 --file $pathing/Dockerfile -t $tagless_image:$versionString -t $tagless_image:$versionShortString ."
+		echo "docker buildx build --platform=linux/amd64,linux/arm64 --file $pathing/Dockerfile -t $tagless_image:$versionString -t $tagless_image:$versionShortString ." >> ./build-images-temp.sh
 	fi
 
 	if [[ -n $defaultParentTag ]] && [[ "$defaultParentTag" == "$parentTag" ]]; then
