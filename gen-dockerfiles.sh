@@ -18,6 +18,7 @@ if [[ $arm64 == "1" ]]; then
 	echo "docker buildx create --use cimg"  >> ./build-images.sh
 fi
 
+touch push-images-temp.sh
 echo "#!/usr/bin/env bash" > ./push-images.sh
 echo "# Do not edit by hand; please use build scripts/templates to make changes" >> ./push-images.sh
 chmod +x ./push-images.sh
@@ -86,32 +87,39 @@ build_and_push() {
 	# every version loop will generate these basic docker tags
 	# if parentTags are enabled, then additional tags will be generated in the parentTag loop
 	# the defaultString is referenced as the tag that should be given by default for either a parent Tag or an alias
-
-	echo "docker push $tagless_image:$versionShortString" >> ./push-images-temp.sh
-	echo "docker push $tagless_image:$versionString" >> ./push-images-temp.sh
-
+	
 	if [[ -z "$arm64" ]]; then
+		echo "docker push $tagless_image:$versionShortString" >> ./push-images-temp.sh
+		echo "docker push $tagless_image:$versionString" >> ./push-images-temp.sh
 		echo "docker build --file $pathing/Dockerfile -t $tagless_image:$versionString -t $tagless_image:$versionShortString --platform linux/amd64 ." >> ./build-images-temp.sh
 	elif [[ $pathing == *"browsers"* ]]; then
-		echo "docker buildx build --platform=linux/amd64 --file $pathing/Dockerfile -t $tagless_image:$versionString -t $tagless_image:$versionShortString ." >> ./build-images-temp.sh
+		echo "docker buildx build --platform=linux/amd64 --file $pathing/Dockerfile -t $tagless_image:$versionString -t $tagless_image:$versionShortString --push ." >> ./build-images-temp.sh
 	else
-		echo "docker buildx build --platform=linux/amd64,linux/arm64 --file $pathing/Dockerfile -t $tagless_image:$versionString -t $tagless_image:$versionShortString ." >> ./build-images-temp.sh
+		echo "docker buildx build --platform=linux/amd64,linux/arm64 --file $pathing/Dockerfile -t $tagless_image:$versionString -t $tagless_image:$versionShortString --push ." >> ./build-images-temp.sh
 	fi
 
 	if [[ -n $defaultParentTag ]] && [[ "$defaultParentTag" == "$parentTag" ]]; then
-		{ 
-			echo "docker tag $tagless_image:$versionString $tagless_image:$defaultString"
-			echo "docker tag $tagless_image:$versionShortString $tagless_image:$defaultShortString"
-			echo "docker push $tagless_image:$defaultShortString"
-			echo "docker push $tagless_image:$defaultString"
-		} >> ./push-images-temp.sh
+		if [[ -z "$arm64" ]]; then
+			{ 
+				echo "docker tag $tagless_image:$versionString $tagless_image:$defaultString"
+				echo "docker tag $tagless_image:$versionShortString $tagless_image:$defaultShortString"
+				echo "docker push $tagless_image:$defaultShortString"
+				echo "docker push $tagless_image:$defaultString"
+			} >> ./push-images-temp.sh
+		fi
 	fi
 	
 	if [[ -n $vgAlias1 ]] && [[ "$vgVersion" = "$aliasGroup" ]]; then
-		{
-			echo "docker tag $tagless_image:$versionString $tagless_image:$defaultString"
-			echo "docker push $tagless_image:$defaultString"
-		} >> ./push-images-temp.sh
+		if [[ -z "$arm64" ]]; then
+			{
+				echo "docker tag $tagless_image:$versionString $tagless_image:$defaultString"
+				echo "docker push $tagless_image:$defaultString"
+			} >> ./push-images-temp.sh
+		else
+			{
+				echo "docker buildx imagetools create -t $tagless_image:$defaultString $tagless_image:$versionString"
+			} >> ./push-images-temp.sh
+		fi
 	fi
 }
 
