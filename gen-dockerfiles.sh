@@ -10,6 +10,7 @@ tagless_image=${namespace}/${repository}
 # with modern versions of Docker, a push file became neccesary as well.
 echo "#!/usr/bin/env bash" > ./build-images.sh
 echo "# Do not edit by hand; please use build scripts/templates to make changes" >> ./build-images.sh
+echo "set -eo pipefail" >> ./build-images.sh
 chmod +x ./build-images.sh
 echo "" >> ./build-images.sh
 
@@ -21,6 +22,7 @@ fi
 touch push-images-temp.sh
 echo "#!/usr/bin/env bash" > ./push-images.sh
 echo "# Do not edit by hand; please use build scripts/templates to make changes" >> ./push-images.sh
+echo "set -eo pipefail" >> ./push-images.sh
 chmod +x ./push-images.sh
 
 export CREATE_VERSIONS=("$@")
