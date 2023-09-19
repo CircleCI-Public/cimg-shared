@@ -29,7 +29,8 @@ function parseTags() {
     done
   done < build-images.sh
   createMetadataFile
-  if git log -1 --pretty=%s | grep "\[release\]" && [[ $CIRCLE_BRANCH == "main" ]]; then
+  # if git log -1 --pretty=%s | grep "\[release\]" &&
+  if [[ $CIRCLE_BRANCH != "main" ]]; then
     appendToManifest "$S3_BUCKET_NAME"
   fi
 }
@@ -96,15 +97,16 @@ function signVerifyDeploy() {
     digest=$(jq -r ".[\"$tag\"][0].digest" "$REGISTRY_DIR/metadata.json")
     digestTag=${tag}@${digest}
 
-    if git log -1 --pretty=%s | grep "\[release\]" && [[ $CIRCLE_BRANCH == "main" ]]; then
+    # if git log -1 --pretty=%s | grep "\[release\]" &&
+    if [[ $CIRCLE_BRANCH != "main" ]]; then
       echo "Copying image from ccitest to cimg"
-      cosign copy "ccitest/$repository:$digestTag" "$namespace/$repository:$tag"
+      cosign copy "ccitest/$repository:$digestTag" "ccitest/cimg-orb:$tag"
       echo "Verifying signature..."
-      cosign verify --key "$KMS_KEY" "$namespace/$repository:$tag"
+      cosign verify --key "$KMS_KEY" "ccitest/cimg-orb:$tag"
     else
       namespace=ccitest
-      echo "y" | cosign sign --key "$KMS_KEY" "$namespace/$repository:$digestTag"
-      cosign verify --key "$KMS_KEY" "$namespace/$repository:$tag"
+      echo "y" | cosign sign --key "$KMS_KEY" "ccitest/cimg-orb:$digestTag"
+      cosign verify --key "$KMS_KEY" "ccitest/cimg-orb:$tag"
     fi
   done
 }
