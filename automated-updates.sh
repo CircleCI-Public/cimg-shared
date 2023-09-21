@@ -170,13 +170,36 @@ replaceVersions() {
 ###
   # generateDatedTags generates tags in the form '2023.03'
 ###
+declare -A quarters
+quarters["01"]="01"
+quarters["04"]="04"
+quarters["07"]="07"
+quarters["10"]="10"
+
+export quarters
+
 generateDatedTags() {
   CURRENTMONTH=$(date +%m)
   CURRENTYEAR=$(date +%Y)
-
-  RELEASE+=$CURRENTYEAR
-  RELEASE+="."
-  RELEASE+=$CURRENTMONTH
-
+  RELEASE="$CURRENTYEAR.$CURRENTMONTH"
   export RELEASE
+}
+
+# Check the mont
+checkMonth() {
+  if [[ ${quarters[${RELEASE##*.}]+exists} && $TEMPLATEMONTH != "${RELEASE##*.}" ]]; then
+    STRING_TO_REPLACE="$TEMPLATEYEAR.$TEMPLATEMONTH"
+  fi
+  export STRING_TO_REPLACE
+}
+
+replaceDatedTags() {
+  local templateFile=$1
+  TEMPLATEYEAR=$(grep -m 1 "FROM" "$templateFile" | head -1 | cut -d : -f2 | cut -d . -f1)
+  TEMPLATEMONTH=$(grep -m 1 "FROM" "$templateFile" | head -1 | cut -d : -f2 | cut -d . -f2)
+
+  generateDatedTags
+  checkMonth
+
+  [[ -n $STRING_TO_REPLACE ]] && sed -i.bak "s|$STRING_TO_REPLACE|$RELEASE|g" "$templateFile"
 }
