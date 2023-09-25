@@ -214,7 +214,7 @@ replaceDatedTags() {
   local templateFile=$1
   local interval=${2:-"quarterly"}
   TEMPLATEYEAR=$(grep -m 1 "FROM" "$templateFile" | head -1 | cut -d : -f2 | cut -d . -f1)
-  TEMPLATEMONTH=$(grep -m 1 "FROM" "$templateFile" | head -1 | cut -d : -f2 | cut -d . -f2)
+  TEMPLATEMONTH=$(grep -m 1 "FROM" "$templateFile" | head -1 | cut -d : -f2 | cut -d . -f2 | cut -d - -f1)
 
   generateDatedTags
   checkMonth
