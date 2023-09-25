@@ -195,7 +195,16 @@ checkMonth() {
 
 # Check months based on monthly releases e.g cimg/deploy, cimg/aws, cimg/azure
 releaseMonthly() {
-  if [[ $TEMPLATEMONTH != "${RELEASE##*.}" ]]; then
+  if [ -f GEN-CHECK ]; then
+    source GEN-CHECK
+  else
+    echo "GEN-CHECK does not exist"
+    exit 1
+  fi
+
+  OLDRELEASEMONTH="$(echo "$GEN_CHECK" | cut -d . -f2)"
+
+  if [[ $OLDRELEASEMONTH != "${RELEASE##*.}" ]]; then
     RELEASEMONTHLY=$RELEASE
   fi
   export RELEASEMONTHLY
