@@ -185,7 +185,7 @@ generateDatedTags() {
   export RELEASE
 }
 
-# Check the mont
+# Check the month based on quarterly releases; most cimgs
 checkMonth() {
   if [[ ${quarters[${RELEASE##*.}]+exists} && $TEMPLATEMONTH != "${RELEASE##*.}" ]]; then
     STRING_TO_REPLACE="$TEMPLATEYEAR.$TEMPLATEMONTH"
@@ -193,13 +193,24 @@ checkMonth() {
   export STRING_TO_REPLACE
 }
 
+# Check months based on monthly releases e.g cimg/deploy, cimg/aws, cimg/azure
+releaseMonthly() {
+  if [[ $TEMPLATEMONTH != "${RELEASE##*.}" ]]; then
+    RELEASEMONTHLY=$RELEASE
+  fi
+  export RELEASEMONTHLY
+}
+
 replaceDatedTags() {
   local templateFile=$1
+  local interval=${2:-"quarterly"}
   TEMPLATEYEAR=$(grep -m 1 "FROM" "$templateFile" | head -1 | cut -d : -f2 | cut -d . -f1)
   TEMPLATEMONTH=$(grep -m 1 "FROM" "$templateFile" | head -1 | cut -d : -f2 | cut -d . -f2)
 
   generateDatedTags
   checkMonth
+  [[ $interval == "monthly" ]] && releaseMonthly
+
 
   [[ -n $STRING_TO_REPLACE ]] && sed -i.bak "s|$STRING_TO_REPLACE|$RELEASE|g" "$templateFile"
 }
