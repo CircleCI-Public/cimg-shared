@@ -25,6 +25,20 @@ echo "# Do not edit by hand; please use build scripts/templates to make changes"
 echo "set -eo pipefail" >> ./push-images.sh
 chmod +x ./push-images.sh
 
+while getopts "m:" flag; do
+ case $flag in
+   m) # Handle the -m flag
+   echo "lacking minor versions ignored"
+   MAJOR_ONLY=1
+   ;;
+   \?)
+   echo "invalid flag"
+   exit 1
+   ;;
+ esac
+done
+
+
 export CREATE_VERSIONS=("$@")
 
 # A version can be a major.minor or major.minor.patch version string.
@@ -158,12 +172,14 @@ for versionGroup in "$@"; do
 	vgVersionFull=$(cut -d "v" -f2- <<< "$versionGroup")
 	vgVersion=$vgVersionFull  # will be deprecated in the future
 
-	if [[ $vgVersionFull =~ ^[0-9]+\.[0-9]+ ]]; then
-		vgVersionMinor=${BASH_REMATCH[0]}
-		versionShort=$vgVersionMinor  # will be deprecated in the future
-	else
-		echo "Version matching (minor) failed." >&2
-		exit 1
+	if [[ $MAJOR_ONLY -ne 1 ]]; then
+		if [[ $vgVersionFull =~ ^[0-9]+\.[0-9]+ ]]; then
+			vgVersionMinor=${BASH_REMATCH[0]}
+			versionShort=$vgVersionMinor  # will be deprecated in the future
+		else
+			echo "Version matching (minor) failed." >&2
+			exit 1
+		fi
 	fi
 
 	if [[ $vgVersionFull =~ ^[0-9]+ ]]; then
