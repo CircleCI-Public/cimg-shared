@@ -44,8 +44,9 @@ RUN	printf '#!/bin/sh\nXvfb :99 -screen 0 1280x1024x24 &\nexec "$@"\n' | sudo te
 RUN echo 'Package: *' | sudo tee -a /etc/apt/preferences.d/firefox.pref && \
 	echo 'Pin: release o=LP-PPA-mozillateam' | sudo tee -a /etc/apt/preferences.d/firefox.pref && \
 	echo 'Pin-Priority: 1001' | sudo tee -a /etc/apt/preferences.d/firefox.pref && \
-	sudo add-apt-repository --yes ppa:mozillateam/ppa && \
-	sudo apt-get install --no-install-recommends --yes firefox && \
+	echo "deb https://ppa.launchpadcontent.net/mozillateam/ppa/ubuntu focal main" | sudo tee /etc/apt/sources.list.d/firefox.list && \
+	sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0AB215679C571D1C8325275B9BDB3D89CE49EC21 && \
+	sudo apt-get update && sudo apt-get install --no-install-recommends --yes firefox && \
 	sudo rm -rf /var/lib/apt/lists/* && \
 	firefox --version
 
