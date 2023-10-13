@@ -155,7 +155,7 @@ filepath_templating () {
 #####
 for versionGroup in "$@"; do
 	# Process the version group(s) that were passed to this script.
-	if [[ "$versionGroup" -ne "-m" ]]; then
+	if [[ "$versionGroup" != "-m" ]]; then
 		if [[ "$versionGroup" == *"#"* ]]; then
 			vgParam1=$(cut -d "#" -f2- <<< "$versionGroup")
 			versionGroup="${versionGroup//$vgParam1}"
@@ -189,7 +189,6 @@ for versionGroup in "$@"; do
 			fi
 			[[ -d "$versionShort" ]] || mkdir "$versionShort"
 		else
-			echo $vgVersionFull
 			vgVersionMinor="$vgVersionFull.0"
 			versionShort="$vgVersionFull"
 			vgVersionMajor="$vgVersionFull"
@@ -242,7 +241,7 @@ done
 
 if [[ -n "${CREATE_VERSIONS}" ]]; then
 		# Make sure the current alias isn't in the file.
-	if [[ $CREATE_VERSIONS -ne "-m" ]]; then
+	if [[ $CREATE_VERSIONS != "-m" ]]; then
 		if [[ -f GEN-CHECK ]]; then
 			grep -v "${CREATE_VERSIONS}" ./GEN-CHECK > ./TEMP2 && mv ./TEMP2 ./GEN-CHECK
 		fi
