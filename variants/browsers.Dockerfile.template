@@ -5,10 +5,11 @@ FROM %%NAMESPACE%%/%%PARENT%%:%%PARENT_TAG%%-node
 LABEL maintainer="CircleCI Community & Partner Engineering Team <community-partner@circleci.com>"
 
 # Install Selenium
-ENV SELENIUM_VER=3.141.59
-RUN curl -sSL -o selenium-server-standalone-${SELENIUM_VER}.jar "https://selenium-release.storage.googleapis.com/${SELENIUM_VER%.*}/selenium-server-standalone-${SELENIUM_VER}.jar" && \
-    sudo cp selenium-server-standalone-${SELENIUM_VER}.jar /usr/local/bin/selenium.jar && \
-    rm selenium-server-standalone-${SELENIUM_VER}.jar
+ENV SELENIUM_VER=4.14.1
+
+RUN curl -sSL -o selenium-server-standalone-${SELENIUM_VER}.jar "https://github.com/SeleniumHQ/selenium/releases/download/selenium-server-${SELENIUM_VER}.jar" && \
+    sudo cp selenium-server-${SELENIUM_VER}.jar /usr/local/bin/selenium.jar && \
+    rm selenium-server-${SELENIUM_VER}.jar
 
 RUN sudo apt-get update && \
 	sudo apt-get install --yes --no-install-recommends \
@@ -53,10 +54,13 @@ RUN echo 'Package: *' | sudo tee -a /etc/apt/preferences.d/firefox.pref && \
 # regularly updated thing. Instead, if this version of Chrome isn't what the
 # end user wants they should install a different version via the Browser Tools
 # Orb.
-RUN wget -q -O - "https://dl.google.com/linux/linux_signing_key.pub" | sudo apt-key add - && \
-	echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list && \
-	sudo apt-get update && \
-	sudo apt-get install google-chrome-stable && \
+# Note: Chrome is only packaged for amd64, so we do not install it for arm64
+RUN [[ $(uname -m) == "x86_64" ]]; then \
+		wget -q -O - "https://dl.google.com/linux/linux_signing_key.pub" | sudo apt-key add - && \
+		echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list && \
+		sudo apt-get update && \
+		sudo apt-get install google-chrome-stable; \
+	fi && \
 	sudo rm -rf /var/lib/apt/lists/*
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
