@@ -25,6 +25,20 @@ echo "# Do not edit by hand; please use build scripts/templates to make changes"
 echo "set -eo pipefail" >> ./push-images.sh
 chmod +x ./push-images.sh
 
+while getopts "m:" flag; do
+ case $flag in
+   m) # Handle the -m flag
+   echo "lacking minor versions ignored"
+   MAJOR_ONLY=1
+   ;;
+   \?)
+   echo "invalid flag"
+   exit 1
+   ;;
+ esac
+done
+
+
 export CREATE_VERSIONS=("$@")
 
 # A version can be a major.minor or major.minor.patch version string.
@@ -140,91 +154,102 @@ filepath_templating () {
 # Starting version loop.
 #####
 for versionGroup in "$@"; do
-
 	# Process the version group(s) that were passed to this script.
-	if [[ "$versionGroup" == *"#"* ]]; then
-		vgParam1=$(cut -d "#" -f2- <<< "$versionGroup")
-		versionGroup="${versionGroup//$vgParam1}"
-		versionGroup="${versionGroup//\#}"
-	fi
-
-	if [[ "$versionGroup" == *"="* ]]; then
-		vgAlias1=$(cut -d "=" -f2- <<< "$versionGroup")
-		versionGroup="${versionGroup//$vgAlias1}"
-		versionGroup="${versionGroup//=}"
-		aliasGroup="${versionGroup}"
-	fi
-
-	vgVersionFull=$(cut -d "v" -f2- <<< "$versionGroup")
-	vgVersion=$vgVersionFull  # will be deprecated in the future
-
-	if [[ $vgVersionFull =~ ^[0-9]+\.[0-9]+ ]]; then
-		vgVersionMinor=${BASH_REMATCH[0]}
-		versionShort=$vgVersionMinor  # will be deprecated in the future
-	else
-		echo "Version matching (minor) failed." >&2
-		exit 1
-	fi
-
-	if [[ $vgVersionFull =~ ^[0-9]+ ]]; then
-		vgVersionMajor=${BASH_REMATCH[0]}
-	else
-		echo "Version matching (major) failed." >&2
-		exit 1
-	fi
-
-	[[ -d "$versionShort" ]] || mkdir "$versionShort"
-
-	# no parentTag loop; creates Dockerfiles and variants
-	if [[ -z "${parentTags[0]}" ]]; then
-		parse_template_variables "" "$parent" "./Dockerfile.template" "$vgVersion" "$versionShort"
-		build_and_push "$versionShort" "$vgVersion" "$versionShort" "$vgAlias1"
-
-		for variant in "${variants[@]}"; do
-			filepath_templating
-			parse_template_variables "$variant/" "$repository" "$fileTemplate" "$vgVersion" "$versionShort/$variant"
-			build_and_push "$versionShort/$variant" "$vgVersion-$variant" "$versionShort-$variant" "$vgAlias1-$variant"
-		done
-	else
-
-	# parentTag loop; one Dockerfile will be created along with however many variants there are for each parentTag
-		for parentTag in "${parentTags[@]}"; do
-			if [[ -n $parentTag ]]; then
-				parse_template_variables "$parentTag/" "$parent" "./Dockerfile.template" "$parentTag" "$versionShort/$parentTag"
-				build_and_push "$versionShort/$parentTag" "$vgVersion-$parentSlug-$parentTag" "$versionShort-$parentSlug-$parentTag" "$vgVersion" "$versionShort"
-				
-				for variant in "${variants[@]}"; do
-					filepath_templating
-					parse_template_variables "$parentTag/$variant/" "$repository" "$fileTemplate" "$vgVersion-$parentSlug-$parentTag" "$versionShort/$parentTag/$variant"
-					build_and_push "$versionShort/$parentTag/$variant" "$vgVersion-$parentSlug-$parentTag-$variant" "$versionShort-$parentSlug-$parentTag-$variant" "$vgVersion-$variant" "$versionShort-$variant"
-				done
-			fi
-		done
-	fi
-	# Build out the ALIASES file. Keeps track of aliases that have been set
-	# without losing old versions.
-	if [[ -n $vgAlias1 ]] && [[ $aliasGroup = "$versionGroup" ]]; then
-		if [[ -f ALIASES ]]; then
-			# Make sure the current alias isn't in the file.
-			grep -v "${vgAlias1}" ./ALIASES > ./TEMP && mv ./TEMP ./ALIASES
+	if [[ "$versionGroup" != "-m" ]]; then
+		if [[ "$versionGroup" == *"#"* ]]; then
+			vgParam1=$(cut -d "#" -f2- <<< "$versionGroup")
+			versionGroup="${versionGroup//$vgParam1}"
+			versionGroup="${versionGroup//\#}"
 		fi
 
-		echo "${vgAlias1}=${vgVersion}" >> ALIASES
-	fi
+		if [[ "$versionGroup" == *"="* ]]; then
+			vgAlias1=$(cut -d "=" -f2- <<< "$versionGroup")
+			versionGroup="${versionGroup//$vgAlias1}"
+			versionGroup="${versionGroup//=}"
+			aliasGroup="${versionGroup}"
+		fi
 
-	# This .bak thing fixes a Linux/macOS compatibility issue, but the files are cleaned up
-	find . -name \*.bak -type f -delete
+		vgVersionFull=$(cut -d "v" -f2- <<< "$versionGroup")
+		vgVersion=$vgVersionFull  # will be deprecated in the future
+
+		if [[ $MAJOR_ONLY -ne 1 ]]; then
+			if [[ $vgVersionFull =~ ^[0-9]+\.[0-9]+ ]]; then
+				vgVersionMinor=${BASH_REMATCH[0]}
+				versionShort=$vgVersionMinor  # will be deprecated in the future
+			else
+				echo "Version matching (minor) failed." >&2
+				exit 1
+			fi
+
+			if [[ $vgVersionFull =~ ^[0-9]+ ]]; then
+				vgVersionMajor=${BASH_REMATCH[0]}
+			else
+				echo "Version matching (major) failed." >&2
+				exit 1
+			fi
+			[[ -d "$versionShort" ]] || mkdir "$versionShort"
+		else
+			vgVersionMinor="$vgVersionFull.0"
+			versionShort="$vgVersionFull"
+			vgVersionMajor="$vgVersionFull"
+			[[ -d "$versionShort.0" ]] || mkdir "$versionShort.0"
+		fi
+			
+
+
+		# no parentTag loop; creates Dockerfiles and variants
+		if [[ -z "${parentTags[0]}" ]]; then
+			parse_template_variables "" "$parent" "./Dockerfile.template" "$vgVersion" "$versionShort"
+			build_and_push "$versionShort" "$vgVersion" "$versionShort" "$vgAlias1"
+
+			for variant in "${variants[@]}"; do
+				filepath_templating
+				parse_template_variables "$variant/" "$repository" "$fileTemplate" "$vgVersion" "$versionShort/$variant"
+				build_and_push "$versionShort/$variant" "$vgVersion-$variant" "$versionShort-$variant" "$vgAlias1-$variant"
+			done
+		else
+
+		# parentTag loop; one Dockerfile will be created along with however many variants there are for each parentTag
+			for parentTag in "${parentTags[@]}"; do
+				if [[ -n $parentTag ]]; then
+					parse_template_variables "$parentTag/" "$parent" "./Dockerfile.template" "$parentTag" "$versionShort/$parentTag"
+					build_and_push "$versionShort/$parentTag" "$vgVersion-$parentSlug-$parentTag" "$versionShort-$parentSlug-$parentTag" "$vgVersion" "$versionShort"
+					
+					for variant in "${variants[@]}"; do
+						filepath_templating
+						parse_template_variables "$parentTag/$variant/" "$repository" "$fileTemplate" "$vgVersion-$parentSlug-$parentTag" "$versionShort/$parentTag/$variant"
+						build_and_push "$versionShort/$parentTag/$variant" "$vgVersion-$parentSlug-$parentTag-$variant" "$versionShort-$parentSlug-$parentTag-$variant" "$vgVersion-$variant" "$versionShort-$variant"
+					done
+				fi
+			done
+		fi
+		# Build out the ALIASES file. Keeps track of aliases that have been set
+		# without losing old versions.
+		if [[ -n $vgAlias1 ]] && [[ $aliasGroup = "$versionGroup" ]]; then
+			if [[ -f ALIASES ]]; then
+				# Make sure the current alias isn't in the file.
+				grep -v "${vgAlias1}" ./ALIASES > ./TEMP && mv ./TEMP ./ALIASES
+			fi
+
+			echo "${vgAlias1}=${vgVersion}" >> ALIASES
+		fi
+
+		# This .bak thing fixes a Linux/macOS compatibility issue, but the files are cleaned up
+		find . -name \*.bak -type f -delete
+	fi
 done
 
 if [[ -n "${CREATE_VERSIONS}" ]]; then
 		# Make sure the current alias isn't in the file.
-	if [[ -f GEN-CHECK ]]; then
-		grep -v "${CREATE_VERSIONS}" ./GEN-CHECK > ./TEMP2 && mv ./TEMP2 ./GEN-CHECK
-	fi
+	if [[ $CREATE_VERSIONS != "-m" ]]; then
+		if [[ -f GEN-CHECK ]]; then
+			grep -v "${CREATE_VERSIONS}" ./GEN-CHECK > ./TEMP2 && mv ./TEMP2 ./GEN-CHECK
+		fi
 
-	echo "GEN_CHECK=($@)" > GEN-CHECK
-	if [[ -f TEMP2 ]]; then
-		rm ./TEMP2
+		echo "GEN_CHECK=($@)" > GEN-CHECK
+		if [[ -f TEMP2 ]]; then
+			rm ./TEMP2
+		fi
 	fi
 fi
 
