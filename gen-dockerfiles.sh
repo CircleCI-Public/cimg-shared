@@ -189,10 +189,11 @@ for versionGroup in "$@"; do
 			fi
 			[[ -d "$versionShort" ]] || mkdir "$versionShort"
 		else
+			vgVersionMajor="$vgVersionFull.0"
 			vgVersionMinor="$vgVersionFull.0"
-			versionShort="$vgVersionFull"
-			vgVersionMajor="$vgVersionFull"
-			[[ -d "$versionShort.0" ]] || mkdir "$versionShort.0"
+			versionShort="$vgVersionMinor"
+			vgVersion="$versionShort.0"
+			[[ -d "$versionShort" ]] || mkdir "$versionShort"
 		fi
 			
 
@@ -201,7 +202,6 @@ for versionGroup in "$@"; do
 		if [[ -z "${parentTags[0]}" ]]; then
 			parse_template_variables "" "$parent" "./Dockerfile.template" "$vgVersion" "$versionShort"
 			build_and_push "$versionShort" "$vgVersion" "$versionShort" "$vgAlias1"
-
 			for variant in "${variants[@]}"; do
 				filepath_templating
 				parse_template_variables "$variant/" "$repository" "$fileTemplate" "$vgVersion" "$versionShort/$variant"
@@ -214,7 +214,7 @@ for versionGroup in "$@"; do
 				if [[ -n $parentTag ]]; then
 					parse_template_variables "$parentTag/" "$parent" "./Dockerfile.template" "$parentTag" "$versionShort/$parentTag"
 					build_and_push "$versionShort/$parentTag" "$vgVersion-$parentSlug-$parentTag" "$versionShort-$parentSlug-$parentTag" "$vgVersion" "$versionShort"
-					
+
 					for variant in "${variants[@]}"; do
 						filepath_templating
 						parse_template_variables "$parentTag/$variant/" "$repository" "$fileTemplate" "$vgVersion-$parentSlug-$parentTag" "$versionShort/$parentTag/$variant"
