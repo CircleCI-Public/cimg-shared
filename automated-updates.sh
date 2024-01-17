@@ -190,6 +190,8 @@ checkMonth() {
   if [[ ${quarters[${RELEASE##*.}]+exists} && $TEMPLATEMONTH != "${RELEASE##*.}" ]]; then
     STRING_TO_REPLACE="$TEMPLATEYEAR.$TEMPLATEMONTH"
   fi
+
+  export STRING_TO_REPLACE
 }
 
 replaceDatedTags() {
