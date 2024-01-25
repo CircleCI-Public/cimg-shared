@@ -207,3 +207,15 @@ replaceDatedTags() {
   [[ -n $STRING_TO_REPLACE ]] && sed -i.bak "s|$STRING_TO_REPLACE|$RELEASE|g" "$templateFile"
   rm -rf ./*.bak
 }
+
+# Only used for the deploy suite of cimgs: gcp, azure, aws. namespace and parent are sourced from the repo's manifest
+releaseDeployImage() {
+  local version=$1
+
+  if docker buildx imagetools inspect "$namespace/$parent:$RELEASE-node" &> /dev/null; then
+    ./shared/release "$version.1"
+  else
+    echo "$namespace/$parent:$RELEASE-node does not exist"
+    exit 0
+  fi
+}
