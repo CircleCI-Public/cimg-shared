@@ -213,7 +213,7 @@ releaseDeployImage() {
   local version=$1
 
   if docker buildx imagetools inspect "$namespace/$parent:$RELEASE-node" &> /dev/null; then
-    ./shared/release "$version.1"
+    ./shared/release.sh "$version.1"
   else
     echo "$namespace/$parent:$RELEASE-node does not exist"
     exit 0
