@@ -107,7 +107,7 @@ build_and_push() {
 	if [[ -z "$arm64" ]]; then
 		echo "docker push $tagless_image:$versionShortString" >> ./push-images-temp.sh
 		echo "docker push $tagless_image:$versionString" >> ./push-images-temp.sh
-		echo "docker build --file $pathing/Dockerfile -t $tagless_image:$versionString -t $tagless_image:$versionShortString --platform linux/amd64 ." >> ./build-images-temp.sh
+		echo "docker build --file $pathing/Dockerfile -t $tagless_image:$versionString -t $tagless_image:$versionShortString --platform linux/amd64 --push ." >> ./build-images-temp.sh
 	elif [[ $pathing == *"browsers"* ]]; then
 		echo "docker buildx build --platform=linux/amd64 --file $pathing/Dockerfile -t $tagless_image:$versionString -t $tagless_image:$versionShortString --push ." >> ./build-images-temp.sh
 	else
