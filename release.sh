@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+# -e: exit on errors
+# -u: exit on unset variables
+# -o pipefail: exit when commands in the middle of a pipe fail
+set -euo pipefail
+
 # Much of the version processing logic is repeated from gen-dockerfiles.sh
 # This should be de-duped sometime in the future when this logic is solidified
 versions=()
@@ -46,11 +51,13 @@ elif [[ ${#versions[@]} -gt 4 ]]; then
 	commitMSG="Pub: ${versions[0]},${versions[1]},${versions[2]},${versions[3]}, and more. [release]"
 fi
 
-defaultBranch=$(git remote show origin | grep 'HEAD branch' | cut -d' ' -f5)
+# Detect the remote name linked to the current branch in case it's not "origin"
+remote=$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}' | cut -d'/' -f1)
+defaultBranch=$(git remote show "${remote}" | grep 'HEAD branch' | cut -d' ' -f5)
 
 git checkout -b "${branchName}" "${defaultBranch}"
 shared/gen-dockerfiles.sh "$@"
 git add .
 git commit -m "${commitMSG}"
-git push -u origin "${branchName}"
+git push -u "${remote}" "${branchName}"
 gh pr create --title "$commitMSG" --head "$branchName" --body "$commitMSG"
