@@ -9,3 +9,4 @@ See [the `circleci-cimg` topic tag](https://github.com/search?q=topic%3Acircleci
 ## Contributing
 
 We welcome [issues](https://github.com/CircleCI-Public/cimg-shared/issues) submitted to and [pull requests](https://github.com/CircleCI-Public/cimg-shared/pulls) opened against this repository!
+on:
