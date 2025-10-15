@@ -4,6 +4,7 @@
 # Registry will be ignored for now unless we move off Docker Hub.
 # Import repo-specific image information
 source ./manifest
+BASE_VERSION="$base_version"
 tagless_image=${namespace}/${repository}
 
 # Prepare the build and push files. Originally we only needed a build file but
@@ -82,6 +83,18 @@ parse_template_variables () {
 	[[ -d "$directory" ]] || mkdir "$directory"
 
 	sed -e 's!%%PARENT%%!'"${parent}"'!g' "${fileTemplate}" > "./${versionShort}/${variantPath}Dockerfile"
+	if [ -n "$new_tags" ]; then
+		for i in "${new_tags[@]}"; do
+			if [ "$i" = "$versionShort" ]; then
+				BASE_VERSION="$new_version"
+				break
+			fi
+		done
+		BASE_VERSION="$base_version"
+	else
+		BASE_VERSION="$base_version"
+	fi
+	sed -i.bak 's/%%BASE_VERSION%%/'"${BASE_VERSION}"'/g' "./${versionShort}/${variantPath}Dockerfile"
 	sed -i.bak 's/%%PARENT_TAG%%/'"${parentTag}"'/g' "./${versionShort}/${variantPath}Dockerfile"
 	sed -i.bak 's/%%NAMESPACE%%/'"${namespace}"'/g' "./${versionShort}/${variantPath}Dockerfile"
 	sed -i.bak 's/%%MAIN_VERSION%%/'"${vgVersion}"'/g' "./${versionShort}/${variantPath}Dockerfile" # will be deprecated in the future
