@@ -70,7 +70,7 @@ parse_template_variables () {
 
 	sed -e 's!%%PARENT%%!'"${parent}"'!g' "${fileTemplate}" > "./${versionShort}/${variantPath}Dockerfile"
 	if [ -n "$new_tags" ]; then
-		for i in ${new_tags[*]}; do
+		for i in "${new_tags[@]}"; do
 			if [ "$i" = "$versionShort" ]; then
 				BASE_VERSION="$new_version"
 				break
