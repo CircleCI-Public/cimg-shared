@@ -106,6 +106,18 @@ parse_template_variables () {
 	sed -i.bak 's!%%ALIAS1%%!'"${vgAlias1}"'!g' "./${versionShort}/${variantPath}Dockerfile"
 }
 
+# Variants that cannot be built for arm64. Repos declare these in their
+# manifest as `amd64_only_variants=(browsers ndk)`; browsers stays the
+# default so existing manifests keep working unchanged.
+is_amd64_only () {
+	local pathing=${1}
+	local variant
+	for variant in "${amd64_only_variants[@]:-browsers}"; do
+		[[ $pathing == *"$variant"* ]] && return 0
+	done
+	return 1
+}
+
 build_and_push() {
 	local pathing=${1}
 	local versionString=${2}
@@ -121,7 +133,7 @@ build_and_push() {
 		echo "docker push $tagless_image:$versionShortString" >> ./push-images-temp.sh
 		echo "docker push $tagless_image:$versionString" >> ./push-images-temp.sh
 		echo "docker build --file $pathing/Dockerfile -t $tagless_image:$versionString -t $tagless_image:$versionShortString --platform linux/amd64 --push ." >> ./build-images-temp.sh
-	elif [[ $pathing == *"browsers"* ]]; then
+	elif is_amd64_only "$pathing"; then
 		echo "docker buildx build --platform=linux/amd64 --file $pathing/Dockerfile -t $tagless_image:$versionString -t $tagless_image:$versionShortString --push ." >> ./build-images-temp.sh
 	else
 		echo "docker buildx build --platform=linux/amd64,linux/arm64 --file $pathing/Dockerfile -t $tagless_image:$versionString -t $tagless_image:$versionShortString --push ." >> ./build-images-temp.sh
