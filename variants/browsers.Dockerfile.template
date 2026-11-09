@@ -58,5 +58,26 @@ RUN wget -q -O - "https://dl.google.com/linux/linux_signing_key.pub" | sudo apt-
 	sudo apt-get install google-chrome-stable && \
 	sudo rm -rf /var/lib/apt/lists/*
 
+# Install chrome-headless-shell (the "old" headless mode, split out of Chrome in
+# 132) at the same version as the Chrome installed above. If Chrome for Testing
+# has no build for the exact patch version, fall back to the latest patch of the
+# same build (MAJOR.MINOR.BUILD). If that's missing too, fail the image build.
+# https://github.com/GoogleChromeLabs/chrome-for-testing/issues/192
+RUN set -eu; \
+	CHROME_VER="$(google-chrome --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+')"; \
+	CFT_BASE="https://storage.googleapis.com/chrome-for-testing-public"; \
+	URL="${CFT_BASE}/${CHROME_VER}/linux64/chrome-headless-shell-linux64.zip"; \
+	if ! curl -fsSLI "${URL}" > /dev/null; then \
+		BUILD="${CHROME_VER%.*}"; \
+		CHROME_VER="$(curl -fsSL https://googlechromelabs.github.io/chrome-for-testing/latest-patch-versions-per-build.json | jq -er --arg b "${BUILD}" '.builds[$b].version')"; \
+		URL="${CFT_BASE}/${CHROME_VER}/linux64/chrome-headless-shell-linux64.zip"; \
+	fi; \
+	echo "Installing chrome-headless-shell ${CHROME_VER}"; \
+	curl -fsSL -o /tmp/chs.zip "${URL}"; \
+	sudo unzip -q /tmp/chs.zip -d /opt; \
+	rm /tmp/chs.zip; \
+	sudo ln -s /opt/chrome-headless-shell-linux64/chrome-headless-shell /usr/local/bin/chrome-headless-shell; \
+	chrome-headless-shell --no-sandbox --version
+
 ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["/bin/sh"]
